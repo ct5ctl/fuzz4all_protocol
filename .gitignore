@@ -1,5 +1,6 @@
 .idea/
 api_key.txt
 *.egg-info/
+*.txt
 Results/
 __pycache__/

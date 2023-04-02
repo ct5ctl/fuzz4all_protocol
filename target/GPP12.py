@@ -4,7 +4,7 @@ from target.base_target import Target
 from target.base_target import FResult
 
 
-class GPP12(Target):
+class GPP12Target(Target):
 
     def validate_individual(self, filename) -> (FResult, str):
         self.logger.logo("Validating {} ...".format(filename))
@@ -13,7 +13,7 @@ class GPP12(Target):
                                    encoding="utf-8",
                                    text=True)
         if exit_code.returncode == 1:
-            return FResult.FAILURE, "failed to compile"
+            return FResult.FAILURE, exit_code.stderr
         elif exit_code.returncode != 0:
             return FResult.ERROR, exit_code.stderr
 
@@ -31,7 +31,7 @@ class GPP12(Target):
                                    encoding="utf-8",
                                    text=True)
         if exit_code.returncode == 1:
-            return FResult.FAILURE, "failed to compile"
+            return FResult.FAILURE, exit_code.stderr
         elif exit_code.returncode != 0:
             return FResult.ERROR, exit_code.stderr
 
@@ -42,3 +42,5 @@ class GPP12(Target):
                                        text=True)
             if exit_code.returncode != 0:
                 return FResult.ERROR, "{} failed to compile".format(op)
+
+        return FResult.SAFE, "its safe"

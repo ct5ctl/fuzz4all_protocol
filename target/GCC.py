@@ -6,7 +6,7 @@ from target.base_target import FResult
 
 class GCCTarget(Target):
 
-    def validate_individual(self, filename):
+    def validate_individual(self, filename) -> (FResult, str):
         self.logger.logo("Validating {} ...".format(filename))
 
         exit_code = subprocess.run("gcc -c {} -o testbed/out".format(filename), shell=True,

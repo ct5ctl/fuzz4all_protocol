@@ -1,6 +1,7 @@
 import argparse
 
 from GCC import GCCTarget
+from GPP12 import GPP12Target
 
 
 def main():
@@ -9,7 +10,13 @@ def main():
     parser.add_argument("--target", type=str, default="gcc")
     args = parser.parse_args()
 
-    target = GCCTarget("c", folder=args.folder)
+    if args.target == "gcc":
+        target = GCCTarget("c", folder=args.folder)
+    elif args.target == "gpp12":
+        target = GPP12Target("cpp", folder=args.folder)
+    else:
+        raise NotImplementedError
+
     target.validate_all()
 
 
