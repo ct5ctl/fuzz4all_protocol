@@ -1,5 +1,6 @@
 import openai
 import time
+import signal
 
 
 def create_openai_config(prompt,
@@ -21,27 +22,52 @@ def create_openai_config(prompt,
     }
 
 
+def create_chatgpt_config(prev: dict, message: str, max_tokens: int,
+                          temperature: float = 1,
+                          system_message: str = "You are an Automated Program Repair tool."):
+    if prev == {}:
+        return {
+            "model": "gpt-3.5-turbo",
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "messages": [
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": message.strip()}
+            ]
+        }
+    else:
+        return prev
+
+
+def handler(signum, frame):
+    # swallow signum and frame
+    raise Exception("I have become end of time")
+
+
 # Handles requests to OpenAI API
 def request_engine(config):
     ret = None
     while ret is None:
         try:
-            ret = openai.Completion.create(**config)
+            signal.signal(signal.SIGALRM, handler)
+            signal.alarm(10)  # wait 10
+            ret = openai.ChatCompletion.create(**config)
+            signal.alarm(0)
         except openai.error.InvalidRequestError as e:
             print(e)
-            if "Please reduce your prompt" in str(e):
-                config['max_tokens'] = config['max_tokens'] - 50
-                if config['max_tokens'] < 100:
-                    return None
-            else:
-                return None
+            signal.alarm(0)
         except openai.error.RateLimitError as e:
             print("Rate limit exceeded. Waiting...")
-            time.sleep(60) # wait for a minute
+            print(e)
+            signal.alarm(0)  # cancel alarm
+            time.sleep(5)
         except openai.error.APIConnectionError as e:
             print("API connection error. Waiting...")
-            time.sleep(5)  # wait for a minute
-        except:
+            signal.alarm(0)  # cancel alarm
+            time.sleep(5)
+        except Exception as e:
+            print(e)
             print("Unknown error. Waiting...")
-            time.sleep(5)  # wait for a minute
-    return ret['choices']
+            signal.alarm(0)  # cancel alarm
+            time.sleep(1)
+    return ret
