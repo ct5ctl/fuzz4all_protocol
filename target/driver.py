@@ -1,19 +1,16 @@
 import argparse
 
-from GCC import GCCTarget
-from GPP12 import GPP12Target
+from target.CPP.GPP12 import GPP12Target
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--folder", type=str, default="Results/test")
-    parser.add_argument("--target", type=str, default="gcc")
+    parser.add_argument("--target", type=str, default="gpp12")
     args = parser.parse_args()
 
-    if args.target == "gcc":
-        target = GCCTarget("c", folder=args.folder)
-    elif args.target == "gpp12":
-        target = GPP12Target("cpp", folder=args.folder)
+    if args.target == "gpp12":
+        target = GPP12Target(language="cpp", timeout=10, folder=args.folder)
     else:
         raise NotImplementedError
 

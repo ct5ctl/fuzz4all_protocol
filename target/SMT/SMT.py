@@ -15,4 +15,21 @@ class SMTTarget(Target):
 
     def check_syntax_valid(self, code):
         # TODO
-        return True
+        with open("temp{}.smt2".format(self.CURRENT_TIME), "w") as f:
+            f.write(code)
+        try:
+            exit_code = subprocess.run(
+                "cvc5-Linux --lang smt2 {}".format("temp{}.smt2".format(self.CURRENT_TIME)),
+                shell=True, capture_output=True, text=True,
+                timeout=5)
+            if exit_code.returncode == 0:
+                return True
+            else:
+                print(exit_code.stdout)
+                return False
+        except subprocess.TimeoutExpired as te:
+            pname = "'temp{}.smt2'".format(self.CURRENT_TIME)
+            subprocess.run(["ps -ef | grep " + pname + " | grep -v grep | awk '{print $2}'"], shell=True)
+            subprocess.run(["ps -ef | grep " + pname + " | grep -v grep | awk '{print $2}' | xargs -r kill -9"],
+                           shell=True)  # kill all tests thank you
+            return False
