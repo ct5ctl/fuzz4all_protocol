@@ -7,7 +7,8 @@ from template import CPP_TEMPLATE_immediate_function, CPP_TEMPLATE_consteval, CP
 from engine.util.api_request import create_chatgpt_config, request_engine
 from engine.util.util import simple_parse, comment_remover
 from target.base_target import Target
-from target.GPP12 import GPP12Target
+from target.CPP.GPP12 import GPP12Target
+from target.SMT.SMT import SMTTarget
 
 
 def _create_chatgpt_fifo_template(system_message: str, user_message: str, prev: list):
@@ -62,7 +63,7 @@ def main():
     if args.language == "cpp":  # CPP
         target = GPP12Target(language=args.language, folder=args.folder)
     elif args.language == "smt2":  # SMT solvers
-        raise NotImplementedError
+        target = SMTTarget(language=args.language, folder=args.folder)
     else:
         raise NotImplementedError
 
