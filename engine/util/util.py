@@ -14,3 +14,13 @@ def comment_remover(text):
         re.DOTALL | re.MULTILINE
     )
     return re.sub(pattern, replacer, text)
+
+
+def simple_parse(gen_body: str):
+    # first check if its a code block
+    if "```" in gen_body:
+        func = gen_body.split("```")[1]
+        func = "\n".join(func.split("\n")[1:])
+    else:
+        func = ""
+    return func

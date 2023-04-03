@@ -255,7 +255,7 @@ void int327 (const unsigned char p_48, unsigned char p_49)
 """
 
 CPP_TEMPLATE_consteval = {
-    "separator": '// create a fuzzing testcase for a C++ compiler for feature "if consteval"',
+    "separator": 'Please create a fuzzing testcase for a C++ compiler to test feature "if consteval"',
     "first":
         """
 #include <type_traits>
@@ -397,7 +397,7 @@ protected:
 
 
 CPP_TEMPLATE_likely_unlikely = {
-    "separator": '// create a fuzzing testcase for a C++ compiler for feature "likely, unlikely attributes"',
+    "separator": 'Please create a fuzzing testcase for a C++ compiler to test feature "likely, unlikely attributes"',
     "first" :
         """
 int f(int i)
@@ -429,7 +429,7 @@ int f(int n) {
 }
 
 CPP_TEMPLATE_immediate_function = {
-    "separator": '// create a fuzzing testcase for a C++ compiler for feature "immediate function"',
+    "separator": 'Please create a fuzzing testcase for a C++ compiler to test feature "immediate function"',
     "first" :
         """
 consteval int sqr(int n) {
