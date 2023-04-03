@@ -1,6 +1,6 @@
 # Fuzz Everything, Everywhere, All At Once
 
-### Setup 
+### Developer Setup 
 `pip install -e .`
 
 ### Little things to implement
