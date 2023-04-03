@@ -1,6 +1,7 @@
 import re
 
 
+# TODO (Add other lang support): temp, only facilitate basic c/cpp syntax
 def comment_remover(text):
     def replacer(match):
         s = match.group(0)
@@ -16,6 +17,9 @@ def comment_remover(text):
     return re.sub(pattern, replacer, text)
 
 
+# most fuzzing targets should be some variation of source code
+# so this function is likely fine, but we can experiment with
+# other more clever variations
 def simple_parse(gen_body: str):
     # first check if its a code block
     if "```" in gen_body:

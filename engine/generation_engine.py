@@ -44,26 +44,6 @@ def _create_fifo_template(separator, first, second, third):
     return (separator+"\n").join(["", first+"\n\n", second+"\n\n", third+"\n\n", "\n"])
 
 
-def _check_syntax_valid(code):
-    with open("temp{}.cpp".format(CURRENT_TIME), "w") as f:
-        f.write(code)
-    try:
-        exit_code = subprocess.run("g++ -std=c++23 -c -fsyntax-only {}".format("temp{}.cpp".format(CURRENT_TIME)),
-                                   shell=True, capture_output=True, text=True,
-                                   timeout=5)
-        if exit_code.returncode == 0:
-            return True
-        else:
-            print(exit_code.stderr)
-            return False
-    except subprocess.TimeoutExpired as te:
-        pname = "'temp{}.cpp'".format(CURRENT_TIME)
-        subprocess.run(["ps -ef | grep " + pname + " | grep -v grep | awk '{print $2}'"], shell=True)
-        subprocess.run(["ps -ef | grep " + pname + " | grep -v grep | awk '{print $2}' | xargs -r kill -9"],
-                       shell=True)  # kill all tests thank you
-        return False
-
-
 def generation_fifo(args):
     with open(args.folder + "/prompt.txt", "w") as f:
         f.write(C_TEMPLATE)

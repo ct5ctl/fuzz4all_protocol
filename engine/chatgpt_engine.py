@@ -6,8 +6,8 @@ import json
 from template import CPP_TEMPLATE_immediate_function, CPP_TEMPLATE_consteval, CPP_TEMPLATE_likely_unlikely
 from engine.util.api_request import create_chatgpt_config, request_engine
 from engine.util.util import simple_parse, comment_remover
-from engine.util.Logger import Logger
-from engine.generation_engine import _check_syntax_valid
+from target.base_target import Target
+from target.GPP12 import GPP12Target
 
 
 def _create_chatgpt_fifo_template(system_message: str, user_message: str, prev: list):
@@ -20,26 +20,25 @@ def _create_chatgpt_fifo_template(system_message: str, user_message: str, prev: 
     return messages
 
 
-def generation_fifo(args):
-    logger = Logger(args.folder)
+def generation_fifo(args, target: Target):
     prompt_used = CPP_TEMPLATE_likely_unlikely
     first, second, third = prompt_used['first'].strip(), prompt_used['second'].strip(), prompt_used['third'].strip()
     results = []
     for i in range(0, 5000):
-        messages = _create_chatgpt_fifo_template("You are a C++ Fuzzer.", prompt_used['separator'], [first, second, third])
+        messages = _create_chatgpt_fifo_template(target.SYSTEM_MESSAGE, prompt_used['separator'], [first, second, third])
         config = create_chatgpt_config(prev={}, messages=messages, max_tokens=500, temperature=1)
         for message in config['messages']:
             print("{} : {}".format(message['role'], message['content']))
         ret = request_engine(config)
         func = comment_remover(simple_parse(ret["choices"][0]['message']["content"]))
         if func != "":
-            logger.logo("========== sample =========")
-            logger.logo(func)
-            logger.logo("========== sample =========")
+            target.logger.logo("========== sample =========")
+            target.logger.logo(func)
+            target.logger.logo("========== sample =========")
             with open(args.folder + "/{}.{}".format(i, args.language), "w") as f:
                 f.write(func)
             results.append({"output": func, "usage": ret['usage'], "prompt": config})
-            if _check_syntax_valid(func):
+            if target.check_syntax_valid(func):
                 if third != "":
                     first = second
                     second = third
@@ -55,12 +54,19 @@ def main():
     parser.add_argument("--key_file", type=str, default="api_key.txt")
     parser.add_argument("--language", type=str, default="c")
     args = parser.parse_args()
+
+    openai.api_key = open(args.key_file, 'r').read().strip()
     if not os.path.exists(args.folder):
         os.makedirs(args.folder)
 
-    openai.api_key = open(args.key_file, 'r').read().strip()
+    if args.language == "cpp":  # CPP
+        target = GPP12Target(language=args.language, folder=args.folder)
+    elif args.language == "smt2":  # SMT solvers
+        raise NotImplementedError
+    else:
+        raise NotImplementedError
 
-    generation_fifo(args)
+    generation_fifo(args, target)
 
 
 if __name__ == "__main__":

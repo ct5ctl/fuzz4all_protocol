@@ -1,5 +1,5 @@
-import os
 import glob
+import time
 
 from enum import Enum
 from engine.util.Logger import Logger
@@ -12,13 +12,16 @@ class FResult(Enum):
 
 
 # base class file for target, used for user defined system targets
-# the point is to separately define oracles
+# the point is to separately define oracles/fuzzing specific functions/and usages
 class Target(object):
     def __init__(self, language="c", timeout=10, folder="/"):
         self.language = language
         self.folder = folder
         self.timeout = timeout
         self.logger = Logger(self.folder)
+        self.CURRENT_TIME = time.time()
+        # to be overwritten
+        self.SYSTEM_MESSAGE = "You are a Fuzzer."
 
     def validate_individual(self, filename) -> (FResult, str):
         raise NotImplementedError
@@ -32,3 +35,9 @@ class Target(object):
                 self.logger.logo("{} failed validation with error message: {}".format(fuzz_output, message))
             elif f_result == FResult.ERROR:
                 self.logger.logo("{} has potential error!\nerror message:\n{}".format(fuzz_output, message))
+
+    # used for fuzzing to check valid syntax
+    def check_syntax_valid(self, code):
+        # by default return true as there might not be need for syntax check
+        # however such check might be beneficial.
+        return True
