@@ -3,12 +3,15 @@ import openai
 import os
 import json
 
-from template import CPP_TEMPLATE_immediate_function, CPP_TEMPLATE_consteval, CPP_TEMPLATE_likely_unlikely
 from engine.util.api_request import create_chatgpt_config, request_engine
 from engine.util.util import simple_parse, comment_remover
 from target.base_target import Target
+
 from target.CPP.GPP12 import GPP12Target
+from target.CPP.template import CPP_TEMPLATE_likely_unlikely
+
 from target.SMT.SMT import SMTTarget
+from target.SMT.template import EXAMPLE_SMT_TEMPLATE
 
 
 def _create_chatgpt_fifo_template(system_message: str, user_message: str, prev: list):
@@ -22,7 +25,7 @@ def _create_chatgpt_fifo_template(system_message: str, user_message: str, prev: 
 
 
 def generation_fifo(args, target: Target):
-    prompt_used = CPP_TEMPLATE_likely_unlikely
+    prompt_used = EXAMPLE_SMT_TEMPLATE
     first, second, third = prompt_used['first'].strip(), prompt_used['second'].strip(), prompt_used['third'].strip()
     results = []
     for i in range(0, 5000):
@@ -44,7 +47,6 @@ def generation_fifo(args, target: Target):
                     first = second
                     second = third
                 third = func.strip()
-
     with open(os.path.join(args.folder, "fuzz.json"), "w") as f:
         json.dump(results, f)
 

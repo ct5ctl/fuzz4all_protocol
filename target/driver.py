@@ -1,6 +1,7 @@
 import argparse
 
 from target.CPP.GPP12 import GPP12Target
+from target.SMT.SMT import SMTTarget
 
 
 def main():
@@ -11,6 +12,8 @@ def main():
 
     if args.target == "gpp12":
         target = GPP12Target(language="cpp", timeout=10, folder=args.folder)
+    elif args.target == "smt":
+        target = SMTTarget(language="smt2", timeout=10, folder=args.folder)
     else:
         raise NotImplementedError
 
