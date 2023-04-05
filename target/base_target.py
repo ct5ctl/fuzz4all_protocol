@@ -9,6 +9,7 @@ class FResult(Enum):
     SAFE = 1  # validation returns okay
     FAILURE = 2  # validation contains error (something wrong with validation)
     ERROR = 3  # validation returns a potential error (look into)
+    TIMED_OUT = 10  # timed out, can be okay in certain targets
 
 
 # base class file for target, used for user defined system targets
