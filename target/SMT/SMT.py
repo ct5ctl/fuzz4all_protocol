@@ -6,6 +6,12 @@ from target.base_target import FResult
 
 def _check_sat(stdout):
     sat = ""
+
+    for x in stdout.splitlines():
+        if "an invalid model was generated" in x.strip():
+            sat = "invalid model"
+            return sat
+
     for x in stdout.splitlines():
         if x.strip() == "unknown" or x.strip() == "unsupported":
             sat = "unknown"
@@ -58,6 +64,7 @@ class SMTTarget(Target):
             f.write(code)
 
     def validate_individual(self, filename) -> (FResult, str):
+        # TODO rework this entire algo since its very scattered currently
         self.logger.logo("Validating {} ...".format(filename))
         with open(filename, "r") as f:
             code = f.read()
@@ -75,8 +82,9 @@ class SMTTarget(Target):
             return FResult.TIMED_OUT, "CVC5 Timed out"
 
         try:
+            # add "t" as input to throw in shell
             z3_exit_code = subprocess.run(
-                "z3 model_validate=true temp{}.smt2".format(self.CURRENT_TIME),
+                "printf 't' | z3 model_validate=true temp{}.smt2".format(self.CURRENT_TIME),
                 shell=True, capture_output=True, text=True,
                 timeout=5)
         except subprocess.TimeoutExpired as te:
@@ -85,6 +93,10 @@ class SMTTarget(Target):
             subprocess.run(["ps -ef | grep " + pname + " | grep -v grep | awk '{print $2}' | xargs -r kill -9"],
                            shell=True)  # kill all tests thank you
             return FResult.TIMED_OUT, "Z3 Timed out"
+
+        # check for z3 assertion violation
+        if "ASSERTION VIOLATION" in z3_exit_code.stderr:
+            return FResult.ERROR, "ASSERTION VIOLATION. Z3: {}".format(z3_exit_code.stderr)
 
         # first grab the sat results, because some error can be tolerable for sat solving actually
         z3_sat = _check_sat(z3_exit_code.stdout)
