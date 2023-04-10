@@ -15,11 +15,11 @@ class FResult(Enum):
 # base class file for target, used for user defined system targets
 # the point is to separately define oracles/fuzzing specific functions/and usages
 class Target(object):
-    def __init__(self, language="c", timeout=10, folder="/"):
+    def __init__(self, language="c", timeout=10, folder="/", validation=False):
         self.language = language
         self.folder = folder
         self.timeout = timeout
-        self.logger = Logger(self.folder)
+        self.logger = Logger(self.folder, validation=validation)
         self.CURRENT_TIME = time.time()
         # to be overwritten
         self.SYSTEM_MESSAGE = "You are a Fuzzer."
@@ -36,6 +36,8 @@ class Target(object):
                 self.logger.logo("{} failed validation with error message: {}".format(fuzz_output, message))
             elif f_result == FResult.ERROR:
                 self.logger.logo("{} has potential error!\nerror message:\n{}".format(fuzz_output, message))
+            elif f_result == FResult.TIMED_OUT:
+                self.logger.logo("{} timed out".format(fuzz_output))
 
     # used for fuzzing to check valid syntax
     def check_syntax_valid(self, code):

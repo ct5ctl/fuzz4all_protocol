@@ -3,8 +3,11 @@ import os
 
 class Logger:
     # TODO: support logging levels
-    def __init__(self, basedir):
-        self.logfile=os.path.join(basedir, "log.txt")
+    def __init__(self, basedir, validation=False):
+        if validation:
+            self.logfile = os.path.join(basedir, "log_validation.txt")
+        else:
+            self.logfile = os.path.join(basedir, "log.txt")
 
     def log(self, msg, out=False):
         with open(self.logfile, "a+") as logfile:

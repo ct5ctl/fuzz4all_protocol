@@ -11,9 +11,9 @@ def main():
     args = parser.parse_args()
 
     if args.target == "gpp12":
-        target = GPP12Target(language="cpp", timeout=10, folder=args.folder)
+        target = GPP12Target(language="cpp", timeout=10, folder=args.folder, validation=True)
     elif args.target == "smt":
-        target = SMTTarget(language="smt2", timeout=10, folder=args.folder)
+        target = SMTTarget(language="smt2", timeout=10, folder=args.folder, validation=True)
     else:
         raise NotImplementedError
 
