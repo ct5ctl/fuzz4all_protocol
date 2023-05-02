@@ -1,0 +1,4 @@
+pre-commit
+rich
+openai
+tiktoken
