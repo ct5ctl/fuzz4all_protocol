@@ -1,7 +1,6 @@
 EXAMPLE_SMT_TEMPLATE = {
-    "separator": 'Please create a fuzzing testcase for a SMT solver',
-    "first":
-        """
+    "separator": "Please create a fuzzing testcase for a SMT solver",
+    "first": """
 (set-logic QF_LIA)
 (declare-const x Int)
 (declare-const y Int)
@@ -9,23 +8,21 @@ EXAMPLE_SMT_TEMPLATE = {
 (check-sat)
 (exit)
 """,
-    "second":
-        """
+    "second": """
 (set-logic QF_UF)
 (declare-const p Bool)
-(assert (and p (not p))) 
+(assert (and p (not p)))
 (check-sat)
 (exit)
 """,
-    "third":
-        """
-(set-logic QF_BV) 
+    "third": """
+(set-logic QF_BV)
 (declare-const x_0 (_ BitVec 32))
 (declare-const x_1 (_ BitVec 32))
-(declare-const x_2 (_ BitVec 32))   
+(declare-const x_2 (_ BitVec 32))
 (declare-const y_0 (_ BitVec 32))
-(declare-const y_1 (_ BitVec 32))   
-(assert (= x_1 (bvadd x_0 y_0))) 
+(declare-const y_1 (_ BitVec 32))
+(assert (= x_1 (bvadd x_0 y_0)))
 (assert (= y_1 (bvsub x_1 y_0)))
 (assert (= x_2 (bvsub x_1 y_1)))
 (assert (not
@@ -33,5 +30,34 @@ EXAMPLE_SMT_TEMPLATE = {
        (= y_1 x_0))))
 (check-sat)
 (exit)
-"""
+""",
+}
+
+
+CRASH_SMT_TEMPLATE = {
+    "separator": "Please create a complex SMT formula as input to an SMT solver",
+    "first": """
+(define-fun a () Float16 (fp #b1 #b00000 #b0000000011))
+(define-fun l () Float16 (fp #b1 #b00000 #b0000000001))
+(declare-fun b () Float16)
+(declare-fun r () Float16)
+(assert (= l (fp.abs b) r (fp.rem a b)))
+(check-sat)
+(exit)
+""",
+    "second": """
+(declare-sort U 0)
+(declare-fun R (U U) Bool)
+(assert (forall ((x U) (y U)) (= (R x y) ((_ transitive-closure 0) x y))))
+(declare-fun a () U)
+(assert (not (R a a)))
+(check-sat)
+(exit)
+""",
+    "third": """
+(declare-fun fp () (_ FloatingPoint 3 2))
+(assert (= (fp (_ bv0 1) (_ bv0 3) (_ bv0 1)) (fp.fma roundNearestTiesToEven fp fp (fp (_ bv0 1) (_ bv0 3) (_ bv0 1)))))
+(check-sat)
+(exit)
+""",
 }

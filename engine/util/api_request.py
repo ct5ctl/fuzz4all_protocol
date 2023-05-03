@@ -1,15 +1,18 @@
-import openai
-import time
 import signal
+import time
+
+import openai
 
 
-def create_openai_config(prompt,
-                         engine_name="code-davinci-002",
-                         stop=None,
-                         max_tokens=200,
-                         top_p=1,
-                         n=1,
-                         temperature=0):
+def create_openai_config(
+    prompt,
+    engine_name="code-davinci-002",
+    stop=None,
+    max_tokens=200,
+    top_p=1,
+    n=1,
+    temperature=0,
+):
     return {
         "engine": engine_name,
         "prompt": prompt,
@@ -18,18 +21,19 @@ def create_openai_config(prompt,
         "temperature": temperature,
         "logprobs": 1,
         "n": n,
-        "stop": stop
+        "stop": stop,
     }
 
 
-def create_chatgpt_config(prev: dict, messages: list, max_tokens: int,
-                          temperature: float = 1):
+def create_chatgpt_config(
+    prev: dict, messages: list, max_tokens: int, temperature: float = 2
+):
     if prev == {}:
         return {
             "model": "gpt-3.5-turbo",
             "max_tokens": max_tokens,
             "temperature": temperature,
-            "messages": messages
+            "messages": messages,
         }
     else:
         return prev
@@ -46,7 +50,7 @@ def request_engine(config):
     while ret is None:
         try:
             signal.signal(signal.SIGALRM, handler)
-            signal.alarm(10)  # wait 10
+            signal.alarm(60)  # wait 10
             ret = openai.ChatCompletion.create(**config)
             signal.alarm(0)
         except openai.error.InvalidRequestError as e:
