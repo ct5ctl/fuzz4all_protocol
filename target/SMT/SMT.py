@@ -65,7 +65,7 @@ class SMTTarget(Target):
         self.SYSTEM_MESSAGE = "You are a SMT Fuzzer"
 
     def write_back_file(self, code):
-        with open("temp{}.smt2".format(self.CURRENT_TIME), "w") as f:
+        with open("/tmp/temp{}.smt2".format(self.CURRENT_TIME), "w") as f:
             f.write(code)
 
     def validate_individual(self, filename) -> (FResult, str):
@@ -76,8 +76,8 @@ class SMTTarget(Target):
         self.write_back_file(clean_logic(code))
         try:
             cvc_exit_code = subprocess.run(
-                "cvc5 -m -i -q --check-models --lang smt2 temp{}.smt2".format(
-                    self.CURRENT_TIME
+                "cvc5 -m -i -q --check-models --lang smt2 /tmp/temp{}.smt2".format(
+                    self.CURRENT_TIME, self.CURRENT_TIME
                 ),
                 shell=True,
                 capture_output=True,
@@ -103,7 +103,7 @@ class SMTTarget(Target):
         try:
             # add "t" as input to throw in shell
             z3_exit_code = subprocess.run(
-                "printf 't' | z3 model_validate=true temp{}.smt2".format(
+                "printf 't' | z3 model_validate=true /tmp/temp{}.smt2".format(
                     self.CURRENT_TIME
                 ),
                 shell=True,
@@ -186,11 +186,11 @@ class SMTTarget(Target):
         return FResult.SAFE, "its safe"
 
     def check_syntax_valid(self, code):
-        with open("temp{}.smt2".format(self.CURRENT_TIME), "w") as f:
+        with open("/tmp/temp{}.smt2".format(self.CURRENT_TIME), "w") as f:
             f.write(clean_logic(code))
         try:
             exit_code = subprocess.run(
-                "cvc5 --lang smt2 {}".format("temp{}.smt2".format(self.CURRENT_TIME)),
+                "cvc5 --lang smt2 /tmp/temp{}.smt2".format(self.CURRENT_TIME),
                 shell=True,
                 capture_output=True,
                 text=True,

@@ -15,7 +15,7 @@ class GPP12Target(Target):
         self.SYSTEM_MESSAGE = "You are a C++ Fuzzer"
 
     def write_back_file(self, code):
-        with open("temp{}.cpp".format(self.CURRENT_TIME), "w") as f:
+        with open("/tmp/temp{}.cpp".format(self.CURRENT_TIME), "w") as f:
             f.write(code + main_code)
 
     def validate_individual(self, filename) -> (FResult, str):
@@ -23,7 +23,7 @@ class GPP12Target(Target):
         # check without -c option (+ linking)
         try:
             exit_code = subprocess.run(
-                "g++ {} -std=c++23 -o testbed/out".format(filename),
+                "g++ {} -std=c++23 -o /tmp/out{}".format(filename, self.CURRENT_TIME),
                 shell=True,
                 capture_output=True,
                 encoding="utf-8",
@@ -52,8 +52,8 @@ class GPP12Target(Target):
                     code = f.read()
                 self.write_back_file(code)
                 exit_code = subprocess.run(
-                    "g++ temp{}.cpp -std=c++23 -o testbed/out".format(
-                        self.CURRENT_TIME
+                    "g++ /tmp/temp{}.cpp -std=c++23 -o /tmp/out{}".format(
+                        self.CURRENT_TIME, self.CURRENT_TIME
                     ),
                     shell=True,
                     capture_output=True,
@@ -69,12 +69,12 @@ class GPP12Target(Target):
         return FResult.SAFE, "its safe"
 
     def check_syntax_valid(self, code):
-        with open("temp{}.cpp".format(self.CURRENT_TIME), "w") as f:
+        with open("/tmp/temp{}.cpp".format(self.CURRENT_TIME), "w") as f:
             f.write(code)
         try:
             exit_code = subprocess.run(
                 "g++ -std=c++23 -c -fsyntax-only {}".format(
-                    "temp{}.cpp".format(self.CURRENT_TIME)
+                    "/tmp/temp{}.cpp".format(self.CURRENT_TIME)
                 ),
                 shell=True,
                 capture_output=True,
