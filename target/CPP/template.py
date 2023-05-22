@@ -1,5 +1,4 @@
-FIRST = \
-    """
+FIRST = """
 typedef signed char int8_t;
 typedef int int32_t;
 typedef unsigned short int uint16_t;
@@ -50,8 +49,7 @@ func_88 (uint16_t p_89)
 }
 """
 
-SECOND = \
-    """
+SECOND = """
 struct S2
 {
   int f6;
@@ -93,8 +91,7 @@ void func_121 (struct S2 p_122)
 }
 """
 
-THIRD = \
-    """
+THIRD = """
 unsigned char g_17;
 
 const unsigned char func_39 (unsigned char p_40, unsigned char * p_41)
@@ -126,8 +123,7 @@ void int327 (const unsigned char p_48, unsigned char p_49)
 }
 """
 
-C_TEMPLATE = \
-    """
+C_TEMPLATE = """
 // create a fuzzing testcase for a C compiler
 
 typedef signed char int8_t;
@@ -256,8 +252,7 @@ void int327 (const unsigned char p_48, unsigned char p_49)
 
 CPP_TEMPLATE_consteval = {
     "separator": 'Please create a fuzzing testcase for a C++ compiler to test feature "if consteval"',
-    "first":
-        """
+    "first": """
 #include <type_traits>
 
 int slow (int);
@@ -274,8 +269,7 @@ constexpr int fn (int n)
 
 constexpr int i = fn (10);
 """,
-    "second":
-        """
+    "second": """
 consteval int bar(int i) {
     return 2*i;
 }
@@ -291,8 +285,7 @@ int main() {
   [[maybe_unused]] auto a = foo(5);
 }
 """,
-    "third":
-        """
+    "third": """
 consteval int f( int i ) { return 1; }
 
 int fallback() { return 0; }
@@ -302,15 +295,14 @@ constexpr int g( int i )
   if consteval {    //1
     return f( i );
   }
-  else { 
+  else {
     return fallback();
   }
 }
-"""
+""",
 }
 
-CPP_TEMPLATE_multi_dimen_access = \
-    """
+CPP_TEMPLATE_multi_dimen_access = """
 // create a fuzzing testcase for a C++ compiler for feature "multidimensional subscript operator"
 template <typename... T>
 struct W {
@@ -359,8 +351,7 @@ int main()
 
 CPP_TEMPLATE_auto_functional = {
     "separator": '// create a fuzzing testcase for a C++ compiler for feature "auto in functional-style cast"',
-    "first" :
-        """
+    "first": """
 struct A {};
 void f(A&);  // #1
 void f(A&&); // #2
@@ -373,8 +364,7 @@ h()
   f(auto(g())); // calls #2 with a temporary object
 }
 """,
-    "second" :
-        """
+    "second": """
 class A {
     int x;
 
@@ -392,14 +382,13 @@ protected:
     A(const A&);
 };
 """,
-    "third": """"""
+    "third": """""",
 }
 
 
 CPP_TEMPLATE_likely_unlikely = {
     "separator": 'Please create a fuzzing testcase for a C++ compiler to test feature "likely, unlikely attributes"',
-    "first" :
-        """
+    "first": """
 int f(int i)
 {
     switch(i)
@@ -410,8 +399,7 @@ int f(int i)
     return 2;
 }
 """,
-    "second" :
-        """
+    "second": """
 int g(int x) {
   return x;
 }
@@ -425,24 +413,22 @@ int f(int n) {
     return 3;
 }
 """,
-    "third": """"""
+    "third": """""",
 }
 
 CPP_TEMPLATE_immediate_function = {
     "separator": 'Please create a fuzzing testcase for a C++ compiler to test feature "immediate function"',
-    "first" :
-        """
+    "first": """
 consteval int sqr(int n) {
   return n * n;
 }
 
 constexpr int r = sqr(100);
 """,
-    "second" :
-        """
+    "second": """
 #include <iostream>
 using namespace std;
-  
+
 // Constexpr function if replaced with
 // consteval, program works fine
 constexpr int fib(int n)
@@ -450,21 +436,21 @@ constexpr int fib(int n)
     // Base Case
     if (n <= 1)
         return n;
-  
+
     // Find the Fibonacci Number
     return fib(n - 1) + fib(n - 2);
 }
-  
+
 // Driver Code
 int main()
 {
     // Constant expression evaluated
     // at compile time
     const int val = fib(22);
-  
+
     cout << "The fibonacci number "
          << "is: " << val << "\n";
-  
+
     return 0;
 }
 """,
@@ -484,13 +470,12 @@ public:
   consteval double get_y() const {return y_;}
   consteval double get_z() const {return z_;}
 };
-"""
+""",
 }
 
 CPP_TEMPLATE_coroutines = {
     "separator": '// create a fuzzing testcase for a C++ compiler for feature "coroutines"',
-    "first" :
-        """
+    "first": """
 #include <concepts>
 #include <coroutine>
 #include <exception>
@@ -534,18 +519,17 @@ main1()
   h.destroy();
 }
 """,
-    "second" :
-        """
+    "second": """
 #include <coroutine>
 #include <iostream>
- 
+
 struct promise;
- 
+
 struct coroutine : std::coroutine_handle<promise>
 {
     using promise_type = struct promise;
 };
- 
+
 struct promise
 {
     coroutine get_return_object() { return {coroutine::from_promise(*this)}; }
@@ -554,7 +538,7 @@ struct promise
     void return_void() {}
     void unhandled_exception() {}
 };
- 
+
 struct S
 {
     int i;
@@ -564,7 +548,7 @@ struct S
         co_return;
     }
 };
- 
+
 void bad1()
 {
     coroutine h = S{0}.f();
@@ -572,13 +556,13 @@ void bad1()
     h.resume(); // resumed coroutine executes std::cout << i, uses S::i after free
     h.destroy();
 }
- 
+
 coroutine bad2()
 {
     S s{0};
     return s.f(); // returned coroutine can't be resumed without committing use after free
 }
- 
+
 void bad3()
 {
     coroutine h = [i = 0]() -> coroutine // a lambda that's also a coroutine
@@ -590,7 +574,7 @@ void bad3()
     h.resume(); // uses (anonymous lambda type)::i after free
     h.destroy();
 }
- 
+
 void good()
 {
     coroutine h = [](int i) -> coroutine // make i a coroutine parameter
@@ -604,5 +588,401 @@ void good()
     h.destroy();
 }
 """,
-    "third": """"""
+    "third": """""",
+}
+
+cpp_expected = {
+    "docstring": """
+We want to target the expected class, here are the documentation of the expected class:
+std::expected
+```
+template< class T, class E >
+class expected;
+```
+The class template std::expected provides a way to store either of two values. An object of std::expected at any given time either holds an expected value of type T, or an unexpected value of type E. std::expected is never valueless.
+The stored value is allocated directly within the storage occupied by the expected object. No dynamic memory allocation takes place.
+A program is ill-formed if it instantiates an expected with a reference type, a function type, or a specialization of std::unexpected. In addition, T must not be std::in_place_t or std::unexpect_t.
+""",
+    "separator": "Please create a fuzzing testcase for a C++ compiler to test the expected class",
+    "example_code": """
+Here is an example program using std::expected
+```
+#include <expected>
+#include <iostream>
+#include <string_view>
+
+enum class parse_error {
+    invalid_char,
+    overflow
+};
+std::expected<double, parse_error>
+parse_number(std::string_view& str) {
+    const char* begin = str.data();
+    char* end;
+    double retval = std::strtod(begin, &end);
+    if (begin == end) {
+        return std::unexpected(parse_error::invalid_char);
+    }
+    str.remove_prefix(end - begin);
+    return retval;
+}
+auto main(void) -> int {
+    std::string_view src = "12";
+    auto num = parse_number(src);
+    if (num.has_value()) {}
+    else if (num.error() == parse_error::invalid_char) {}
+    else if (num.error() == parse_error::overflow) {}
+    else {}
+    return 0;
+}
+```
+""",
+}
+
+cpp_variant = {
+    "docstring": """
+We want to target the std::variant class, here are the documentation of the expected class:
+`std::variant`
+Description:
+The class template std::variant represents a type-safe union. An instance of std::variant at any given time either holds a value of one of its alternative types, or in the case of error - no value (this state is hard to achieve, see valueless_by_exception).
+As with unions, if a variant holds a value of some object type T, the object representation of T is allocated directly within the object representation of the variant itself. Variant is not allowed to allocate additional (dynamic) memory.
+A variant is not permitted to hold references, arrays, or the type void. Empty variants are also ill-formed (std::variant<std::monostate> can be used instead).
+A variant is permitted to hold the same type more than once, and to hold differently cv-qualified versions of the same type.
+Consistent with the behavior of unions during aggregate initialization, a default-constructed variant holds a value of its first alternative, unless that alternative is not default-constructible (in which case the variant is not default-constructible either). The helper class std::monostate can be used to make such variants default-constructible.
+
+Member functions
+index | returns the zero-based index of the alternative held by the variant
+valueless_by_exception | checks if the variant is in the invalid state
+emplace | constructs a value in the variant, in place
+swap | swaps with another variant
+
+Non-member functions
+visit | calls the provided functor with the arguments held by one or more variants
+holds_alternative | checks if a variant currently holds a given type
+get_if | obtains a pointer to the value of a pointed-to variant given the index or the type (if unique), returns null on error
+
+Helper classes
+monostate | placeholder type for use as the first alternative in a variant of non-default-constructible types
+bad_variant_access | exception thrown on invalid accesses to the value of a variant
+""",
+    # "separator": 'Please create a fuzzing testcase for a C++ compiler to test the std::variant class',
+    "separator": "Please create a very short program which combines std::variant with new C++ features in a complex way",
+    "example_code": """
+Here is an example program using std::variant
+```
+#include <variant>
+#include <string>
+#include <cassert>
+#include <iostream>
+
+int main()
+{
+    std::variant<int, float> v, w;
+    v = 42;
+    int i = std::get<int>(v);
+    assert(42 == i);
+    w = std::get<int>(v);
+    w = std::get<0>(v);
+    w = v;
+    try{std::get<float>(w);}
+    catch (const std::bad_variant_access& ex){}
+    using namespace std::literals;
+    std::variant<std::string> x("abc");
+    x = "def";
+    std::variant<std::string, void const*> y("abc");
+    assert(std::holds_alternative<void const*>(y));
+    y = "xyz"s;
+    assert(std::holds_alternative<std::string>(y));
+}
+```
+""",
+}
+
+cpp_optional = {
+    "docstring": """
+We want to target the std::optional class, here are the documentation of the std::optional class:
+`std::optional`
+Description:
+The class template std::optional manages an optional contained value, i.e. a value that may or may not be present.
+A common use case for optional is the return value of a function that may fail. As opposed to other approaches, such as std::pair<T,bool>, optional handles expensive-to-construct objects well and is more readable, as the intent is expressed explicitly.
+Any instance of optional<T> at any given point in time either contains a value or does not contain a value.
+If an optional<T> contains a value, the value is guaranteed to be allocated as part of the optional object footprint, i.e. no dynamic memory allocation ever takes place. Thus, an optional object models an object, not a pointer, even though operator*() and operator->() are defined.
+When an object of type optional<T> is contextually converted to bool, the conversion returns true if the object contains a value and false if it does not contain a value.
+
+Member functions:
+and_then | returns the result of the given function on the contained value if it exists, or an empty optional otherwise
+transform | returns an optional containing the transformed contained value if it exists, or an empty optional otherwise
+or_else | returns the optional itself if it contains a value, or the result of the given function otherwise
+swap | exchanges the contents
+reset | destroys any contained value
+emplace | constructs the contained value in-place
+
+Non-member functions:
+make_optional | creates an optional object
+""",
+    # "separator": 'Please create a fuzzing testcase for a C++ compiler to test the std::optional class',
+    # "separator": 'Please create a short but complex program which combines many new features of C++ with std::optional',
+    "separator": "Please create a very short program which combines std::optional with new C++ features in a complex way",
+    # "separator": 'Please create a short program which has complex usages of std::optional',
+    # "separator": 'Please create a fuzzing testcase for a C++ compiler to test the std::optional class',
+    "example_code": """
+Here is an example program using std::optional
+```
+#include <string>
+#include <functional>
+#include <iostream>
+#include <optional>
+std::optional<std::string> create(bool b) {
+    if (b)
+        return "Godzilla";
+    return {};
+}
+auto create2(bool b) {
+    return b ? std::optional<std::string>{"Godzilla"} : std::nullopt;
+}
+auto create_ref(bool b) {
+    static std::string value = "Godzilla";
+    return b ? std::optional<std::reference_wrapper<std::string>>{value}
+             : std::nullopt;
+}
+int main() {
+    std::cout << "create(false) returned "
+              << create(false).value_or("empty");
+    if (auto str = create2(true)) {
+    }
+    if (auto str = create_ref(true)) {
+        str->get() = "Mothra";
+    }
+}
+```
+""",
+}
+
+cpp_span = {
+    "docstring": """
+We want to target the std::span class, here are the documentation of the std::span class:
+`std::span`
+Description:
+```
+template<
+    class T,
+    std::size_t Extent = std::dynamic_extent
+> class span;
+```
+The class template span describes an object that can refer to a contiguous sequence of objects with the first element of the sequence at position zero. A span can either have a static extent, in which case the number of elements in the sequence is known at compile-time and encoded in the type, or a dynamic extent.
+If a span has dynamic extent, a typical implementation holds two members: a pointer to T and a size. A span with static extent may have only one member: a pointer to T.
+
+Member functions:
+begin | returns an iterator to the beginning
+end | returns an iterator to the end
+first | obtains a subspan consisting of the first N elements of the sequence
+last | obtains a subspan consisting of the last N elements of the sequence
+subspan | obtains a subspan
+""",
+    # "separator": 'Please create a fuzzing testcase for a C++ compiler to test the std::span class',
+    "separator": "Please create an unique and complex program to test the std::span",
+    "example_code": """
+Here is an example program using std::span
+```
+#include <algorithm>
+#include <cstddef>
+#include <iostream>
+#include <span>
+template<class T, std::size_t N>
+[[nodiscard]]
+constexpr auto slide(std::span<T,N> s, std::size_t offset, std::size_t width) {
+    return s.subspan(offset, offset + width <= s.size() ? width : 0U);
+}
+
+template<class T, std::size_t N, std::size_t M>
+constexpr bool starts_with(std::span<T,N> data, std::span<T,M> prefix) {
+    return data.size() >= prefix.size()
+        && std::equal(prefix.begin(), prefix.end(), data.begin());
+}
+
+template<class T, std::size_t N, std::size_t M>
+constexpr bool ends_with(std::span<T,N> data, std::span<T,M> suffix) {
+    return data.size() >= suffix.size()
+        && std::equal(data.end() - suffix.size(), data.end(),
+                      suffix.end() - suffix.size());
+}
+template<class T, std::size_t N, std::size_t M>
+constexpr bool contains(std::span<T,N> span, std::span<T,M> sub) {
+    return std::search(span.begin(), span.end(), sub.begin(), sub.end()) != span.end();
+}
+int main()
+{
+    constexpr int a[] { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+    constexpr int b[] { 8, 7, 6 };
+    for (std::size_t offset{}; ; ++offset) {
+        static constexpr std::size_t width{6};
+        auto s = slide(std::span{a}, offset, width);
+        if (s.empty())
+            break;
+    }
+    static_assert(
+        starts_with( std::span{a}, std::span{a, 4} ) and
+        starts_with( std::span{a + 1, 4}, std::span{a + 1, 3} ) and
+      ! starts_with( std::span{a}, std::span{b} ) and
+      ! starts_with( std::span{a, 8}, std::span{a + 1, 3} ) and
+        ends_with( std::span{a}, std::span{a + 6, 3} ) and
+      ! ends_with( std::span{a}, std::span{a + 6, 2} ) and
+        contains( std::span{a}, std::span{a + 1, 4} ) and
+      ! contains( std::span{a, 8}, std::span{a, 9} )
+    );
+}
+```
+""",
+}
+
+cpp_is_scoped_enum = {
+    "docstring": """
+We want to target the std::is_scoped_enum class, here are the documentation of the std::is_scoped_enum class:
+`std::is_scoped_enum`
+Description:
+```
+template< class T >
+struct is_scoped_enum;
+```
+Checks whether T is a scoped enumeration type. Provides the member constant value which is equal to true, if T is a scoped enumeration type. Otherwise, value is equal to false.
+The behavior of a program that adds specializations for is_scoped_enum or is_scoped_enum_v is undefined.
+""",
+    # "separator": 'Please create a fuzzing testcase for a C++ compiler to test the std::optional class',
+    # "separator": 'Please create a short but complex program which combines many new features of C++ with std::optional',
+    "separator": "Please create a very short program which combines std::is_scoped_enum with new C++ features in a complex way",
+    # "separator": 'Please create a short program which has complex usages of std::optional',
+    # "separator": 'Please create a fuzzing testcase for a C++ compiler to test the std::optional class',
+    "example_code": """
+Here is an example program using std::is_scoped_enum
+```
+#include <iostream>
+#include <type_traits>
+
+class A {};
+enum E {};
+enum struct Es { oz };
+enum class Ec : int {};
+
+int main()
+{
+    std::boolalpha;
+    std::is_scoped_enum_v<A>;
+    std::is_scoped_enum_v<E>;
+    std::is_scoped_enum_v<Es>;
+    std::is_scoped_enum_v<Ec>;
+    std::is_scoped_enum_v<int>;
+}
+```
+""",
+}
+
+cpp_apply = {
+    "docstring": """
+We want to target the std::apply class, here are the documentation of the std::apply class:
+`std::apply`
+Description:
+```
+template< class F, class Tuple >
+constexpr decltype(auto) apply( F&& f, Tuple&& t ) noexcept(/* see below */);
+```
+Checks whether T is a scoped enumeration type. Provides the member constant value which is equal to true, if T is a scoped enumeration type. Otherwise, value is equal to false.
+The behavior of a program that adds specializations for is_scoped_enum or is_scoped_enum_v is undefined.
+""",
+    # "separator": 'Please create a fuzzing testcase for a C++ compiler to test the std::optional class',
+    # "separator": 'Please create a short but complex program which combines many new features of C++ with std::optional',
+    "separator": "Please create a very short program which combines std::apply with new C++ features in a complex way",
+    # "separator": 'Please create a short program which has complex usages of std::optional',
+    # "separator": 'Please create a fuzzing testcase for a C++ compiler to test the std::optional class',
+    "example_code": """
+Here is an example program using std::apply
+```
+#include <iostream>
+#include <tuple>
+#include <utility>
+
+int add(int first, int second) { return first + second; }
+
+template<typename T>
+T add_generic(T first, T second) { return first + second; }
+
+auto add_lambda = [](auto first, auto second) { return first + second; };
+
+template<typename... Ts>
+std::ostream& operator<<(std::ostream& os, std::tuple<Ts...> const& theTuple) {
+    std::apply
+    (
+        [&os](Ts const&... tupleArgs)
+        {
+            os << '[';
+            std::size_t n{0};
+            ((os << tupleArgs << (++n != sizeof...(Ts) ? ", " : "")), ...);
+            os << ']';
+        }, theTuple
+    );
+    return os;
+}
+
+int main() {
+    std::apply(add, std::pair(1, 2));
+    // Error: can't deduce the function type
+    // std::apply(add_generic, std::make_pair(2.0f, 3.0f));
+    std::apply(add_lambda, std::pair(2.0f, 3.0f));
+}
+```
+""",
+}
+
+cpp_to_underlying = {
+    "docstring": """
+We want to target the std::to_underlying class, here are the documentation of the std::to_underlying class:
+`std::to_underlying`
+Description:
+```
+template< class Enum >
+constexpr std::underlying_type_t<Enum> to_underlying( Enum e ) noexcept;
+```
+Converts an enumeration to its underlying type. Equivalent to return static_cast<std::underlying_type_t<Enum>>(e);.
+Parameters
+e | enumeration value to convert
+Return value
+The integer value of the underlying type of Enum, converted from e.
+Notes
+std::to_underlying can be used to avoid converting an enumeration to an integer type other than its underlying type.
+""",
+    # "separator": 'Please create a fuzzing testcase for a C++ compiler to test the std::optional class',
+    # "separator": 'Please create a short but complex program which combines many new features of C++ with std::optional',
+    "separator": "Please create a very short program which combines std::to_underlying with new C++ features in a complex way",
+    # "separator": 'Please create a short program which has complex usages of std::optional',
+    # "separator": 'Please create a fuzzing testcase for a C++ compiler to test the std::optional class',
+    "example_code": """
+Here is an example program using std::to_underlying
+```
+#include <cstdint>
+#include <iomanip>
+#include <iostream>
+#include <type_traits>
+#include <utility>
+
+int main()
+{
+    enum class E1 : char { e };
+    static_assert(std::is_same_v<char, decltype(std::to_underlying(E1::e))>);
+    enum struct E2 : long { e };
+    static_assert(std::is_same_v<long, decltype(std::to_underlying(E2::e))>);
+    enum E3 : unsigned { e };
+    static_assert(std::is_same_v<unsigned, decltype(std::to_underlying(e))>);
+
+    enum class ColorMask : std::uint32_t {
+        red = 0xFF, green = (red << 8), blue = (green << 8), alpha = (blue << 8)
+    };
+    std::cout << std::hex << std::uppercase << std::setfill('0')
+        << std::setw(8) << std::to_underlying(ColorMask::red)
+        << std::setw(8) << std::to_underlying(ColorMask::green)
+        << std::setw(8) << std::to_underlying(ColorMask::blue)
+        << std::setw(8) << std::to_underlying(ColorMask::alpha);
+    [[maybe_unused]]
+    std::underlying_type_t<ColorMask> y = std::to_underlying(ColorMask::alpha); // OK
+}
+```
+""",
 }

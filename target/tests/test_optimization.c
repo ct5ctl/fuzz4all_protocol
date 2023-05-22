@@ -11,7 +11,7 @@ int main()
     int i;
 
     // convert integer A to float B
-    for (i = 0; i < 4; i++) 
+    for (i = 0; i < 4; i++)
         B[i] = (float)A[i];
 
     // memory copy from B to C
@@ -28,7 +28,7 @@ int main()
 #endif
 
     // print C, C should be [1.0, 2.0, 3.0, 4.0]
-    for (i = 0; i < 4; i++) 
+    for (i = 0; i < 4; i++)
         printf("%f\n", C[i]);
 
     return 0;

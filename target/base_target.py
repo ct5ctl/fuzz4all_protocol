@@ -1,7 +1,9 @@
 import glob
 import time
-
 from enum import Enum
+
+from rich.progress import track
+
 from engine.util.Logger import Logger
 
 
@@ -28,14 +30,25 @@ class Target(object):
         raise NotImplementedError
 
     def validate_all(self):
-        for fuzz_output in glob.glob(self.folder + "/*.{}".format(self.language)):
+        for fuzz_output in track(
+            glob.glob(self.folder + "/*.{}".format(self.language)),
+            description="Validating",
+        ):
             f_result, message = self.validate_individual(fuzz_output)
             if f_result == FResult.SAFE:
                 self.logger.logo("{} is safe".format(fuzz_output))
             elif f_result == FResult.FAILURE:
-                self.logger.logo("{} failed validation with error message: {}".format(fuzz_output, message))
+                self.logger.logo(
+                    "{} failed validation with error message: {}".format(
+                        fuzz_output, message
+                    )
+                )
             elif f_result == FResult.ERROR:
-                self.logger.logo("{} has potential error!\nerror message:\n{}".format(fuzz_output, message))
+                self.logger.logo(
+                    "{} has potential error!\nerror message:\n{}".format(
+                        fuzz_output, message
+                    )
+                )
             elif f_result == FResult.TIMED_OUT:
                 self.logger.logo("{} timed out".format(fuzz_output))
 
