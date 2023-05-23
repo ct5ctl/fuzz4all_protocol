@@ -3,10 +3,9 @@ import json
 import os
 
 import openai
-from rich.progress import track
-
 from engine.util.api_request import create_chatgpt_config, request_engine
 from engine.util.util import comment_remover, simple_parse
+from rich.progress import track
 from target.base_target import Target
 from target.CPP.GPP12 import GPP12Target
 from target.CPP.template import (

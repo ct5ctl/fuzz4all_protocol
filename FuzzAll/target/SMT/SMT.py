@@ -1,6 +1,6 @@
 import subprocess
 
-from target.base_target import FResult, Target
+from FuzzAll.target.target import FResult, Target
 
 
 def _check_sat(stdout):

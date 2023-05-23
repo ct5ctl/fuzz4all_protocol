@@ -4,7 +4,7 @@ from enum import Enum
 
 from rich.progress import track
 
-from engine.util.Logger import Logger
+from FuzzAll.util.Logger import Logger
 
 
 class FResult(Enum):
@@ -17,15 +17,27 @@ class FResult(Enum):
 # base class file for target, used for user defined system targets
 # the point is to separately define oracles/fuzzing specific functions/and usages
 class Target(object):
-    def __init__(self, language="c", timeout=10, folder="/", validation=False):
+    def __init__(self, language="c", timeout=10, folder="/"):
         self.language = language
         self.folder = folder
         self.timeout = timeout
-        self.logger = Logger(self.folder, validation=validation)
+        self.g_logger = Logger(self.folder, validation=True)
+        self.v_logger = Logger(self.folder, validation=False)
         self.CURRENT_TIME = time.time()
         # to be overwritten
         self.SYSTEM_MESSAGE = "You are a Fuzzer."
 
+    # used for fuzzing to check valid syntax
+    def check_syntax_valid(self, code) -> bool:
+        # by default return true as there might not be need for syntax check
+        # however such check might be beneficial.
+        return True
+
+    # generation
+    def generate(self, **kwargs):
+        raise NotImplementedError
+
+    # validation
     def validate_individual(self, filename) -> (FResult, str):
         raise NotImplementedError
 
@@ -36,24 +48,18 @@ class Target(object):
         ):
             f_result, message = self.validate_individual(fuzz_output)
             if f_result == FResult.SAFE:
-                self.logger.logo("{} is safe".format(fuzz_output))
+                self.v_logger.logo("{} is safe".format(fuzz_output))
             elif f_result == FResult.FAILURE:
-                self.logger.logo(
+                self.v_logger.logo(
                     "{} failed validation with error message: {}".format(
                         fuzz_output, message
                     )
                 )
             elif f_result == FResult.ERROR:
-                self.logger.logo(
+                self.v_logger.logo(
                     "{} has potential error!\nerror message:\n{}".format(
                         fuzz_output, message
                     )
                 )
             elif f_result == FResult.TIMED_OUT:
-                self.logger.logo("{} timed out".format(fuzz_output))
-
-    # used for fuzzing to check valid syntax
-    def check_syntax_valid(self, code):
-        # by default return true as there might not be need for syntax check
-        # however such check might be beneficial.
-        return True
+                self.v_logger.logo("{} timed out".format(fuzz_output))
