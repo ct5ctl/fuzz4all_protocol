@@ -780,7 +780,9 @@ last | obtains a subspan consisting of the last N elements of the sequence
 subspan | obtains a subspan
 """,
     # "separator": 'Please create a fuzzing testcase for a C++ compiler to test the std::span class',
-    "separator": "Please create a very short program which combines std::span with new C++ features in a complex way\n#include <span>",
+    "separator": "Please create a very short program which combines std::span with new C++ features in a complex way",
+    "begin": "#include <span>",
+    "target_api": "span",
     "example_code": """
 Here is an example program using std::span
 ```

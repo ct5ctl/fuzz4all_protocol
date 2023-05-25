@@ -40,7 +40,11 @@ class GPP12Target(Target):
         else:
             raise NotImplementedError
         self.prompt = (
-            self.prompt_used["docstring"] + "\n" + self.prompt_used["separator"]
+            self.prompt_used["docstring"]
+            + "\n"
+            + self.prompt_used["separator"]
+            + "\n"
+            + self.prompt_used["begin"]
         )
         self.batch_size = kwargs["bs"]
         self.temperature = kwargs["temperature"]
@@ -71,6 +75,7 @@ class GPP12Target(Target):
         return [func]
 
     def generate_model(self) -> List[str]:
+        print(self.prompt)
         return self.model.generate(
             self.prompt,
             batch_size=self.batch_size,
@@ -80,11 +85,37 @@ class GPP12Target(Target):
 
     def generate(self, **kwargs) -> List[str]:
         fos = self.generate_model()
+        new_fos = []
         for fo in fos:
             self.g_logger.logo("========== sample =========")
-            self.g_logger.logo(fo)
+            new_fos.append(self.prompt_used["begin"] + "\n" + fo)
+            self.g_logger.logo(self.prompt_used["begin"] + "\n" + fo)
             self.g_logger.logo("========== sample =========")
-        return fos
+        return new_fos
+
+    def filter(self, code) -> bool:
+        clean_code = code.replace(self.prompt_used["begin"], "").strip()
+        if self.prompt_used["target_api"] not in clean_code:
+            return False
+        return True
+
+    def update(self, **kwargs):
+        new_code = ""
+        for result, code in kwargs["prev"]:
+            if result == FResult.SAFE and self.filter(code):
+                new_code = code
+        if new_code != "":
+            self.prompt = (
+                self.prompt_used["docstring"]
+                + "\n"
+                + self.prompt_used["separator"]
+                + "\n"
+                + new_code
+                + "\n"
+                + self.prompt_used["separator"]
+                + "\n"
+                + self.prompt_used["begin"]
+            )
 
     def validate_individual(self, filename) -> (FResult, str):
         self.v_logger.logo("Validating {} ...".format(filename))

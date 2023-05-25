@@ -1,6 +1,10 @@
 import argparse
 import os
 
+from rich.traceback import install
+
+install()
+
 from rich.progress import (
     BarColumn,
     MofNCompleteColumn,
@@ -33,6 +37,7 @@ def fuzz(args, target: Target):
         count = 0
         for i in p.track(range(args.num)):
             fos = target.generate()
+            prev = []
             for index, fo in enumerate(fos):
                 file_name = os.path.join(args.folder, f"{count}.fuzz")
                 write_to_file(fo, file_name)
@@ -40,8 +45,9 @@ def fuzz(args, target: Target):
                 # validation on the fly
                 if args.otf:
                     f_result, message = target.validate_individual(file_name)
-                    print(f_result, message)
                     target.parse_validation_message(f_result, message, file_name)
+                    prev.append((f_result, fo))
+            target.update(prev=prev)
 
 
 # evaluate against the oracle to discover any potential bugs

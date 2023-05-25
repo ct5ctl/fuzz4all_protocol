@@ -24,8 +24,8 @@ class Target(object):
         self.folder = folder
         self.timeout = timeout
         # loggers
-        self.g_logger = Logger(self.folder, validation=False)
-        self.v_logger = Logger(self.folder, validation=True)
+        self.g_logger = Logger(self.folder, validation=False, verbose=kwargs["verbose"])
+        self.v_logger = Logger(self.folder, validation=True, verbose=kwargs["verbose"])
         self.CURRENT_TIME = time.time()
         # to be overwritten
         self.SYSTEM_MESSAGE = "You are a Fuzzer."
@@ -42,6 +42,10 @@ class Target(object):
 
     # generation
     def generate(self, **kwargs) -> List[str]:
+        raise NotImplementedError
+
+    # update
+    def update(self, **kwargs):
         raise NotImplementedError
 
     # validation
