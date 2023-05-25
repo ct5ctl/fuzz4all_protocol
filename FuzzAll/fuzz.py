@@ -15,7 +15,7 @@ from FuzzAll.target.target import Target
 
 def write_to_file(fo, file_name):
     try:
-        with open(file_name, "w") as f:
+        with open(file_name, "w", encoding="utf-8") as f:
             f.write(fo)
     except:
         pass
@@ -40,7 +40,14 @@ def fuzz(args, target: Target):
                 # validation on the fly
                 if args.otf:
                     f_result, message = target.validate_individual(file_name)
+                    print(f_result, message)
                     target.parse_validation_message(f_result, message, file_name)
+
+
+# evaluate against the oracle to discover any potential bugs
+# used after the generation
+def evaluate(args, target: Target):
+    target.validate_all()
 
 
 def main():
@@ -51,18 +58,22 @@ def main():
     parser.add_argument("--language", type=str, required=True)
     parser.add_argument("--num", type=int, required=True)
     parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--evaluate", action="store_true")
     parser.add_argument(
         "--otf",
         action="store_true",
         help="use to validate fuzzing outputs on the fly. If flag not "
         "set then only generation will be done",
     )
+
     args = parser.parse_known_args()[0]
     args, target = make_target(args, parser)
-    # assert not os.path.exists(args.folder), f"{args.folder} already exists!"
-    os.makedirs(args.folder, exist_ok=True)
-
-    fuzz(args, target)
+    if not args.evaluate:
+        # assert not os.path.exists(args.folder), f"{args.folder} already exists!"
+        os.makedirs(args.folder, exist_ok=True)
+        fuzz(args, target)
+    else:
+        evaluate(args, target)
 
 
 if __name__ == "__main__":

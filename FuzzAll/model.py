@@ -10,6 +10,8 @@ from transformers import (
 )
 
 os.environ["HF_HOME"] = os.environ.get("HF_HOME", "/JawTitan/huggingface/")
+os.environ["TOKENIZERS_PARALLELISM"] = "false"  # disable warning
+
 HF_CACHE_DIR = "/JawTitan/huggingface/hub"
 
 EOF_STRINGS = ["<|endoftext|>", "###"]

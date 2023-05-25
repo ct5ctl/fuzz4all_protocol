@@ -12,12 +12,13 @@ class Logger:
 
     def log(self, msg, out=False):
         try:
-            with open(self.logfile, "a+") as logfile:
+            with open(self.logfile, "a+", encoding="utf-8") as logfile:
                 logfile.write(msg)
                 logfile.write("\n")
             if out and self.verbose:
                 print(msg)
-        except:
+        except Exception as e:
+            print(e)
             pass
 
     def logo(self, msg):
