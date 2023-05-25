@@ -91,7 +91,9 @@ class GPP12Target(Target):
         # check without -c option (+ linking)
         try:
             exit_code = subprocess.run(
-                "g++ {} -std=c++23 -o /tmp/out{}".format(filename, self.CURRENT_TIME),
+                "g++ -x c++ -std=c++23 {} -o /tmp/out{}".format(
+                    filename, self.CURRENT_TIME
+                ),
                 shell=True,
                 capture_output=True,
                 encoding="utf-8",
@@ -120,7 +122,7 @@ class GPP12Target(Target):
                     code = f.read()
                 self.write_back_file(code)
                 exit_code = subprocess.run(
-                    "g++ /tmp/temp{}.cpp -std=c++23 -o /tmp/out{}".format(
+                    "g++ -std=c++23 -x c++ /tmp/temp{}.cpp -o /tmp/out{}".format(
                         self.CURRENT_TIME, self.CURRENT_TIME
                     ),
                     shell=True,
