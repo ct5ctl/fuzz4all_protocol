@@ -2,3 +2,5 @@ pre-commit
 rich
 openai
 tiktoken
+torch
+transformers

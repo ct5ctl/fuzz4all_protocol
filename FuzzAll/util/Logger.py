@@ -11,11 +11,14 @@ class Logger:
         self.verbose = verbose
 
     def log(self, msg, out=False):
-        with open(self.logfile, "a+") as logfile:
-            logfile.write(msg)
-            logfile.write("\n")
-        if out and self.verbose:
-            print(msg)
+        try:
+            with open(self.logfile, "a+") as logfile:
+                logfile.write(msg)
+                logfile.write("\n")
+            if out and self.verbose:
+                print(msg)
+        except:
+            pass
 
     def logo(self, msg):
         self.log(str(msg), True)

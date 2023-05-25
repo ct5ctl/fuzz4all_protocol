@@ -1,6 +1,12 @@
 import subprocess
+import time
+from typing import List
 
-from target.base_target import FResult, Target
+from FuzzAll.model import make_model
+from FuzzAll.target.CPP.template import cpp_span
+from FuzzAll.target.target import FResult, Target
+from FuzzAll.util.api_request import create_chatgpt_config, request_engine
+from FuzzAll.util.util import comment_remover, simple_parse
 
 main_code = """
 int main(){
@@ -9,17 +15,79 @@ return 0;
 """
 
 
+def _create_chatgpt_docstring_template(
+    system_message: str, user_message: str, docstring: str, example: str, first: str
+):
+    messages = [{"role": "system", "content": system_message}]
+    messages.append({"role": "user", "content": docstring})
+    messages.append({"role": "user", "content": example})
+    if first != "":
+        messages.append({"role": "user", "content": user_message})
+        messages.append({"role": "assistant", "content": "```\n{}\n```".format(first)})
+    messages.append({"role": "user", "content": user_message})
+    return messages
+
+
 class GPP12Target(Target):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.model = None  # to be declared
         self.SYSTEM_MESSAGE = "You are a C++ Fuzzer"
+        # stateful objects that change
+        self.prompt = ""
+        if kwargs["template"] == "cpp_span":
+            self.prompt_used = cpp_span
+        else:
+            raise NotImplementedError
+        self.prompt = (
+            self.prompt_used["docstring"] + "\n" + self.prompt_used["separator"]
+        )
+        self.batch_size = kwargs["bs"]
+        self.temperature = kwargs["temperature"]
+        # TODO: strategies
 
     def write_back_file(self, code):
         with open("/tmp/temp{}.cpp".format(self.CURRENT_TIME), "w") as f:
             f.write(code + main_code)
 
+    def initialize(self):
+        self.g_logger.logo("Initializing ... this may take a while ...")
+        self.model = make_model()
+        self.g_logger.logo("done")
+
+    def generate_chatgpt(self) -> List[str]:
+        messages = _create_chatgpt_docstring_template(
+            self.SYSTEM_MESSAGE,
+            self.prompt_used["separator"],
+            self.prompt_used["docstring"],
+            self.prompt_used["example_code"],
+            "",
+        )
+        config = create_chatgpt_config(
+            prev={}, messages=messages, max_tokens=512, temperature=1.3
+        )
+        ret = request_engine(config)
+        func = comment_remover(simple_parse(ret["choices"][0]["message"]["content"]))
+        return [func]
+
+    def generate_model(self) -> List[str]:
+        return self.model.generate(
+            self.prompt,
+            batch_size=self.batch_size,
+            temperature=self.temperature,
+            max_length=1024,
+        )
+
+    def generate(self, **kwargs) -> List[str]:
+        fos = self.generate_model()
+        for fo in fos:
+            self.g_logger.logo("========== sample =========")
+            self.g_logger.logo(fo)
+            self.g_logger.logo("========== sample =========")
+        return fos
+
     def validate_individual(self, filename) -> (FResult, str):
-        self.logger.logo("Validating {} ...".format(filename))
+        self.v_logger.logo("Validating {} ...".format(filename))
         # check without -c option (+ linking)
         try:
             exit_code = subprocess.run(

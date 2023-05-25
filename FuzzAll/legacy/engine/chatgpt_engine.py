@@ -58,8 +58,13 @@ def generation_fifo(args, target: Target):
         messages = _create_chatgpt_fifo_template(
             target.SYSTEM_MESSAGE, prompt_used["separator"], [first, second, third]
         )
-        # messages = _create_chatgpt_docstring_template(target.SYSTEM_MESSAGE, prompt_used['separator'], prompt_used['docstring'],
-        #                                               prompt_used['example_code'], first)
+        messages = _create_chatgpt_docstring_template(
+            target.SYSTEM_MESSAGE,
+            prompt_used["separator"],
+            prompt_used["docstring"],
+            prompt_used["example_code"],
+            first,
+        )
         config = create_chatgpt_config(
             prev={}, messages=messages, max_tokens=512, temperature=1.3
         )
