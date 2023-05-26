@@ -34,14 +34,34 @@ def fuzz(args, target: Target):
         TextColumn("•"),
         TimeElapsedColumn(),
     ) as p:
+        task = p.add_task("Fuzzing", total=args.num)
         count = 0
-        for i in p.track(range(args.num)):
+
+        if args.resume:
+            n_existing = [
+                int(f.split(".")[0])
+                for f in os.listdir(args.folder)
+                if f.endswith(".fuzz")
+            ]
+            n_existing.sort(reverse=True)
+            if len(n_existing) > 0:
+                count = n_existing[0] + 1
+            log = f" (resuming from {count})"
+            p.console.print(log)
+
+        p.update(task, advance=count)
+
+        while count < args.num:
             fos = target.generate()
+            if not fos:
+                target.initialize()
+                continue
             prev = []
             for index, fo in enumerate(fos):
                 file_name = os.path.join(args.folder, f"{count}.fuzz")
                 write_to_file(fo, file_name)
                 count += 1
+                p.update(task, advance=1)
                 # validation on the fly
                 if args.otf:
                     f_result, message = target.validate_individual(file_name)
@@ -57,7 +77,6 @@ def evaluate(args, target: Target):
 
 
 def main():
-    # TODO: set restart option
     parser = argparse.ArgumentParser()
     # basic options, individual language/target options are referenced in make_target
     parser.add_argument("--folder", type=str, default="Results/test")
@@ -65,6 +84,7 @@ def main():
     parser.add_argument("--num", type=int, required=True)
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--evaluate", action="store_true")
+    parser.add_argument("--resume", action="store_true")
     parser.add_argument(
         "--otf",
         action="store_true",
@@ -75,7 +95,9 @@ def main():
     args = parser.parse_known_args()[0]
     args, target = make_target(args, parser)
     if not args.evaluate:
-        # assert not os.path.exists(args.folder), f"{args.folder} already exists!"
+        assert (
+            not os.path.exists(args.folder) or args.resume
+        ), f"{args.folder} already exists!"
         os.makedirs(args.folder, exist_ok=True)
         fuzz(args, target)
     else:

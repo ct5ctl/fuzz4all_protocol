@@ -1,6 +1,8 @@
 import subprocess
 import time
-from typing import List
+from typing import List, Union
+
+import torch
 
 from FuzzAll.model import make_model
 from FuzzAll.target.CPP.template import cpp_span
@@ -39,6 +41,23 @@ class GPP12Target(Target):
             self.prompt_used = cpp_span
         else:
             raise NotImplementedError
+        self.prompt = None
+        self.batch_size = kwargs["bs"]
+        self.temperature = kwargs["temperature"]
+        # TODO: strategies
+
+    def write_back_file(self, code):
+        try:
+            with open(
+                "/tmp/temp{}.cpp".format(self.CURRENT_TIME), "w", encoding="utf-8"
+            ) as f:
+                f.write(code + main_code)
+        except:
+            pass
+
+    def initialize(self):
+        self.g_logger.logo("Initializing ... this may take a while ...")
+        self.model = make_model()
         self.prompt = (
             self.prompt_used["docstring"]
             + "\n"
@@ -46,17 +65,6 @@ class GPP12Target(Target):
             + "\n"
             + self.prompt_used["begin"]
         )
-        self.batch_size = kwargs["bs"]
-        self.temperature = kwargs["temperature"]
-        # TODO: strategies
-
-    def write_back_file(self, code):
-        with open("/tmp/temp{}.cpp".format(self.CURRENT_TIME), "w") as f:
-            f.write(code + main_code)
-
-    def initialize(self):
-        self.g_logger.logo("Initializing ... this may take a while ...")
-        self.model = make_model()
         self.g_logger.logo("done")
 
     def generate_chatgpt(self) -> List[str]:
@@ -83,8 +91,14 @@ class GPP12Target(Target):
             max_length=1024,
         )
 
-    def generate(self, **kwargs) -> List[str]:
-        fos = self.generate_model()
+    def generate(self, **kwargs) -> Union[List[str], bool]:
+        try:
+            fos = self.generate_model()
+        except RuntimeError:
+            # catch cuda out of memory error.
+            self.g_logger.logo("cuda out of memory...")
+            torch.cuda.empty_cache()
+            return False
         new_fos = []
         for fo in fos:
             self.g_logger.logo("========== sample =========")

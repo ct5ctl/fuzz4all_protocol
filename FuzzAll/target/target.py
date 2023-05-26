@@ -1,7 +1,7 @@
 import glob
 import time
 from enum import Enum
-from typing import List
+from typing import List, Union
 
 from rich.progress import track
 
@@ -41,7 +41,7 @@ class Target(object):
         raise NotImplementedError
 
     # generation
-    def generate(self, **kwargs) -> List[str]:
+    def generate(self, **kwargs) -> Union[List[str], bool]:
         raise NotImplementedError
 
     # update
