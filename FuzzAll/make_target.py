@@ -15,7 +15,7 @@ def make_target(args, parser):
             template=args.template,
             bs=args.bs,
             temperature=args.temperature,
-            verbose=args.verbose,
+            level=args.level,
         )
     elif args.language == "smt2":  # SMT solvers
         parser.add_argument("--template", type=str, required=True)

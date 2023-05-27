@@ -5,7 +5,7 @@ from typing import List, Union
 
 from rich.progress import track
 
-from FuzzAll.util.Logger import Logger
+from FuzzAll.util.Logger import LEVEL, Logger
 
 
 class FResult(Enum):
@@ -24,8 +24,10 @@ class Target(object):
         self.folder = folder
         self.timeout = timeout
         # loggers
-        self.g_logger = Logger(self.folder, validation=False, verbose=kwargs["verbose"])
-        self.v_logger = Logger(self.folder, validation=True, verbose=kwargs["verbose"])
+        self.g_logger = Logger(self.folder, "log_generation.txt", level=kwargs["level"])
+        self.v_logger = Logger(self.folder, "log_validation.txt", level=kwargs["level"])
+        # main logger for system messages
+        self.m_logger = Logger(self.folder, "log.txt")
         self.CURRENT_TIME = time.time()
         # to be overwritten
         self.SYSTEM_MESSAGE = "You are a Fuzzer."
@@ -53,18 +55,27 @@ class Target(object):
         raise NotImplementedError
 
     def parse_validation_message(self, f_result, message, file_name):
+        # TODO: rewrite to include only status in TRACE but full message in VERBOSE
+        self.v_logger.logo("Validating {} ...".format(file_name), LEVEL.TRACE)
         if f_result == FResult.SAFE:
-            self.v_logger.logo("{} is safe".format(file_name))
+            self.v_logger.logo("{} is safe".format(file_name), LEVEL.VERBOSE)
         elif f_result == FResult.FAILURE:
             self.v_logger.logo(
-                "{} failed validation with error message: {}".format(file_name, message)
+                "{} failed validation with error message: {}".format(
+                    file_name, message, LEVEL.VERBOSE
+                )
             )
         elif f_result == FResult.ERROR:
             self.v_logger.logo(
-                "{} has potential error!\nerror message:\n{}".format(file_name, message)
+                "{} has potential error!\nerror message:\n{}".format(
+                    file_name, message, LEVEL.VERBOSE
+                )
+            )
+            self.m_logger.logo(
+                "{} has potential error!".format(file_name, message, LEVEL.INFO)
             )
         elif f_result == FResult.TIMED_OUT:
-            self.v_logger.logo("{} timed out".format(file_name))
+            self.v_logger.logo("{} timed out".format(file_name), LEVEL.VERBOSE)
 
     def validate_all(self):
         for fuzz_output in track(

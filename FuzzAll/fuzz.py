@@ -82,7 +82,7 @@ def main():
     parser.add_argument("--folder", type=str, default="Results/test")
     parser.add_argument("--language", type=str, required=True)
     parser.add_argument("--num", type=int, required=True)
-    parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--level", type=int, required=True)
     parser.add_argument("--evaluate", action="store_true")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument(

@@ -8,6 +8,7 @@ from FuzzAll.model import make_model
 from FuzzAll.target.CPP.template import cpp_span
 from FuzzAll.target.target import FResult, Target
 from FuzzAll.util.api_request import create_chatgpt_config, request_engine
+from FuzzAll.util.Logger import LEVEL
 from FuzzAll.util.util import comment_remover, simple_parse
 
 main_code = """
@@ -56,7 +57,9 @@ class GPP12Target(Target):
             pass
 
     def initialize(self):
-        self.g_logger.logo("Initializing ... this may take a while ...")
+        self.m_logger.logo(
+            "Initializing ... this may take a while ...", level=LEVEL.INFO
+        )
         self.model = make_model()
         self.prompt = (
             self.prompt_used["docstring"]
@@ -65,7 +68,7 @@ class GPP12Target(Target):
             + "\n"
             + self.prompt_used["begin"]
         )
-        self.g_logger.logo("done")
+        self.m_logger.logo("done", level=LEVEL.INFO)
 
     def generate_chatgpt(self) -> List[str]:
         messages = _create_chatgpt_docstring_template(
@@ -83,7 +86,7 @@ class GPP12Target(Target):
         return [func]
 
     def generate_model(self) -> List[str]:
-        print(self.prompt)
+        self.g_logger.logo(self.prompt, level=LEVEL.VERBOSE)
         return self.model.generate(
             self.prompt,
             batch_size=self.batch_size,
@@ -96,16 +99,18 @@ class GPP12Target(Target):
             fos = self.generate_model()
         except RuntimeError:
             # catch cuda out of memory error.
-            self.g_logger.logo("cuda out of memory...")
+            self.m_logger.logo("cuda out of memory...", level=LEVEL.INFO)
             del self.model
             torch.cuda.empty_cache()
             return False
         new_fos = []
         for fo in fos:
-            self.g_logger.logo("========== sample =========")
+            self.g_logger.logo("========== sample =========", level=LEVEL.VERBOSE)
             new_fos.append(self.prompt_used["begin"] + "\n" + fo)
-            self.g_logger.logo(self.prompt_used["begin"] + "\n" + fo)
-            self.g_logger.logo("========== sample =========")
+            self.g_logger.logo(
+                self.prompt_used["begin"] + "\n" + fo, level=LEVEL.VERBOSE
+            )
+            self.g_logger.logo("========== sample =========", level=LEVEL.VERBOSE)
         return new_fos
 
     def filter(self, code) -> bool:
@@ -133,7 +138,6 @@ class GPP12Target(Target):
             )
 
     def validate_individual(self, filename) -> (FResult, str):
-        self.v_logger.logo("Validating {} ...".format(filename))
         # check without -c option (+ linking)
         try:
             exit_code = subprocess.run(
