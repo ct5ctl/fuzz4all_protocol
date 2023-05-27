@@ -177,8 +177,11 @@ class GPP12Target(Target):
 
         if exit_code.returncode == 1:
             if "undefined reference to `main'" in exit_code.stderr:
-                with open(filename, "r") as f:
-                    code = f.read()
+                try:
+                    with open(filename, "r", encoding="utf-8") as f:
+                        code = f.read()
+                except:
+                    pass
                 self.write_back_file(code)
                 exit_code = subprocess.run(
                     "g++ -std=c++23 -x c++ /tmp/temp{}.cpp -o /tmp/out{}".format(
