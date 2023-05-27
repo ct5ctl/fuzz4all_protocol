@@ -5,7 +5,7 @@ from typing import List, Union
 import torch
 
 from FuzzAll.model import make_model
-from FuzzAll.target.CPP.template import cpp_span
+from FuzzAll.target.CPP.template import cpp_is_scoped_enum, cpp_span
 from FuzzAll.target.target import FResult, Target
 from FuzzAll.util.api_request import create_chatgpt_config, request_engine
 from FuzzAll.util.Logger import LEVEL
@@ -40,6 +40,8 @@ class GPP12Target(Target):
         self.prompt = ""
         if kwargs["template"] == "cpp_span":
             self.prompt_used = cpp_span
+        elif kwargs["template"] == "cpp_is_scoped_enum":
+            self.prompt_used = cpp_is_scoped_enum
         else:
             raise NotImplementedError
         self.prompt = None
@@ -60,7 +62,6 @@ class GPP12Target(Target):
         self.m_logger.logo(
             "Initializing ... this may take a while ...", level=LEVEL.INFO
         )
-        self.model = make_model()
         self.prompt = (
             self.prompt_used["docstring"]
             + "\n"
@@ -68,6 +69,7 @@ class GPP12Target(Target):
             + "\n"
             + self.prompt_used["begin"]
         )
+        self.model = make_model(eos=self.prompt_used["separator"])
         self.m_logger.logo("done", level=LEVEL.INFO)
 
     def generate_chatgpt(self) -> List[str]:
@@ -119,11 +121,18 @@ class GPP12Target(Target):
             return False
         return True
 
+    # remove any comments, or blank lines
+    @staticmethod
+    def clean_code(code: str) -> str:
+        code = comment_remover(code)
+        code = "\n".join([line for line in code.split("\n") if line.strip() != ""])
+        return code
+
     def update(self, **kwargs):
         new_code = ""
         for result, code in kwargs["prev"]:
             if result == FResult.SAFE and self.filter(code):
-                new_code = code
+                new_code = self.clean_code(code)
         if new_code != "":
             self.prompt = (
                 self.prompt_used["docstring"]

@@ -57,7 +57,7 @@ class EndOfFunctionCriteria(StoppingCriteria):
 
 
 class StarCoder:
-    def __init__(self, device="cuda", max_length=3000) -> None:
+    def __init__(self, device="cuda", eos: str = "", max_length=3000) -> None:
         checkpoint = "bigcode/starcoderbase"
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained(
@@ -68,7 +68,7 @@ class StarCoder:
             .to(torch.bfloat16)
             .to(device)
         )
-        self.eos = EOF_STRINGS
+        self.eos = EOF_STRINGS + [eos]
         self.max_length = max_length
         self.prefix_token = "<fim_prefix>"
         self.suffix_token = "<fim_suffix><fim_middle>"
@@ -120,5 +120,5 @@ class StarCoder:
         return outputs
 
 
-def make_model():
-    return StarCoder()
+def make_model(eos: str = ""):
+    return StarCoder(eos=eos)
