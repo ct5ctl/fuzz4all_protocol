@@ -97,6 +97,7 @@ class GPP12Target(Target):
         except RuntimeError:
             # catch cuda out of memory error.
             self.g_logger.logo("cuda out of memory...")
+            del self.model
             torch.cuda.empty_cache()
             return False
         new_fos = []
