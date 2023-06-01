@@ -871,12 +871,9 @@ __cpp_lib_optional	202106L	(C++20)
 (DR)	Fully constexpr
 __cpp_lib_optional	202110L	(C++23)	Monadic operations
 """,
-    # "separator": 'Please create a fuzzing testcase for a C++ compiler to test the std::optional class',
-    # "separator": 'Please create a short but complex program which combines many new features of C++ with std::optional',
     "separator": "/* Please create a very short program which combines std::optional with new C++ features in a complex way */",
     "begin": "#include <optional>",
-    # "separator": 'Please create a short program which has complex usages of std::optional',
-    # "separator": 'Please create a fuzzing testcase for a C++ compiler to test the std::optional class',
+    "target_api": "optional",
     "example_code": """
 Here is an example program using std::optional
 ```
