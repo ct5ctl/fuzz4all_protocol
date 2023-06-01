@@ -28,12 +28,16 @@ def create_openai_config(
     }
 
 
-def create_chatgpt_config(
-    prev: dict, messages: list, max_tokens: int, temperature: float = 2
+def create_config(
+    prev: dict,
+    messages: list,
+    max_tokens: int,
+    temperature: float = 2,
+    model: str = "gpt-3.5-turbo",
 ):
     if prev == {}:
         return {
-            "model": "gpt-3.5-turbo",
+            "model": model,
             "max_tokens": max_tokens,
             "temperature": temperature,
             "messages": messages,

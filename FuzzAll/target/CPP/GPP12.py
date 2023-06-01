@@ -7,7 +7,7 @@ import torch
 from FuzzAll.model import make_model
 from FuzzAll.target.CPP.template import cpp_is_scoped_enum, cpp_span
 from FuzzAll.target.target import FResult, Target
-from FuzzAll.util.api_request import create_chatgpt_config, request_engine
+from FuzzAll.util.api_request import create_config, request_engine
 from FuzzAll.util.Logger import LEVEL
 from FuzzAll.util.util import comment_remover, simple_parse
 
@@ -44,6 +44,7 @@ class GPP12Target(Target):
             self.prompt_used = cpp_is_scoped_enum
         else:
             raise NotImplementedError
+        self.initial_prompt = None
         self.prompt = None
         self.batch_size = kwargs["bs"]
         self.temperature = kwargs["temperature"]
@@ -58,19 +59,23 @@ class GPP12Target(Target):
         except:
             pass
 
+    def validate_prompt(self, prompt):
+        # TODO
+        return 0
+
+    def wrap_prompt(self, prompt: str) -> str:
+        return f"/* {prompt}*/\n{self.prompt_used['separator']}\n{self.prompt_used['begin']}"
+
     def initialize(self):
         self.m_logger.logo(
             "Initializing ... this may take a while ...", level=LEVEL.INFO
         )
-        self.prompt = (
-            self.prompt_used["docstring"]
-            + "\n"
-            + self.prompt_used["separator"]
-            + "\n"
-            + self.prompt_used["begin"]
-        )
+        self.initial_prompt = self.auto_prompt(message=self.prompt_used["docstring"])
+        self.prompt = self.initial_prompt
+        self.m_logger.logo("Loading model ...", level=LEVEL.INFO)
         self.model = make_model(eos=self.prompt_used["separator"])
-        self.m_logger.logo("done", level=LEVEL.INFO)
+        self.m_logger.logo("Model Loaded", level=LEVEL.INFO)
+        self.m_logger.logo("Done", level=LEVEL.INFO)
 
     def generate_chatgpt(self) -> List[str]:
         messages = _create_chatgpt_docstring_template(
@@ -80,7 +85,7 @@ class GPP12Target(Target):
             self.prompt_used["example_code"],
             "",
         )
-        config = create_chatgpt_config(
+        config = create_config(
             prev={}, messages=messages, max_tokens=512, temperature=1.3
         )
         ret = request_engine(config)
@@ -122,10 +127,15 @@ class GPP12Target(Target):
         return True
 
     # remove any comments, or blank lines
-    @staticmethod
-    def clean_code(code: str) -> str:
+    def clean_code(self, code: str) -> str:
         code = comment_remover(code)
-        code = "\n".join([line for line in code.split("\n") if line.strip() != ""])
+        code = "\n".join(
+            [
+                line
+                for line in code.split("\n")
+                if line.strip() != "" and line.strip() != self.prompt_used["begin"]
+            ]
+        )
         return code
 
     def update(self, **kwargs):
@@ -135,9 +145,7 @@ class GPP12Target(Target):
                 new_code = self.clean_code(code)
         if new_code != "":
             self.prompt = (
-                self.prompt_used["docstring"]
-                + "\n"
-                + self.prompt_used["separator"]
+                self.initial_prompt
                 + "\n"
                 + new_code
                 + "\n"
