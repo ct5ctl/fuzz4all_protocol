@@ -6,8 +6,14 @@ from typing import List, Union
 
 from rich.progress import track
 
+from FuzzAll.model import make_model
 from FuzzAll.util.api_request import create_config, request_engine
 from FuzzAll.util.Logger import LEVEL, Logger
+from FuzzAll.util.util import (
+    comment_remover,
+    create_chatgpt_docstring_template,
+    simple_parse,
+)
 
 
 class FResult(Enum):
@@ -31,8 +37,18 @@ class Target(object):
         # main logger for system messages
         self.m_logger = Logger(self.folder, "log.txt")
         self.CURRENT_TIME = time.time()
+        self.SYSTEM_MESSAGE = None
         self.AP_SYSTEM_MESSAGE = "You are an auto-prompting tool"
-        self.AP_INSTRUCTION = "Please summarize the above documentation in a concise manner to describe the usage and functionality of the target"
+        self.AP_INSTRUCTION = (
+            "Please summarize the above documentation in a concise manner to describe the usage and "
+            "functionality of the target "
+        )
+        self.prompt_used = None
+        self.batch_size = kwargs["bs"]
+        self.temperature = kwargs["temperature"]
+        self.model = None
+        self.prompt = None
+        self.initial_prompt = None
 
     # used for fuzzing to check valid syntax
     def check_syntax_valid(self, code: str) -> bool:
@@ -102,7 +118,39 @@ class Target(object):
 
     # initialize through either some templates or auto-prompting to determine prompts
     def initialize(self):
-        raise NotImplementedError
+        self.m_logger.logo(
+            "Initializing ... this may take a while ...", level=LEVEL.INFO
+        )
+        self.initial_prompt = self.auto_prompt(message=self.prompt_used["docstring"])
+        self.prompt = self.initial_prompt
+        self.m_logger.logo("Loading model ...", level=LEVEL.INFO)
+        self.model = make_model(eos=self.prompt_used["separator"])
+        self.m_logger.logo("Model Loaded", level=LEVEL.INFO)
+        self.m_logger.logo("Done", level=LEVEL.INFO)
+
+    def generate_chatgpt(self) -> List[str]:
+        messages = create_chatgpt_docstring_template(
+            self.SYSTEM_MESSAGE,
+            self.prompt_used["separator"],
+            self.prompt_used["docstring"],
+            self.prompt_used["example_code"],
+            "",
+        )
+        config = create_config(
+            prev={}, messages=messages, max_tokens=512, temperature=1.3
+        )
+        ret = request_engine(config)
+        func = comment_remover(simple_parse(ret["choices"][0]["message"]["content"]))
+        return [func]
+
+    def generate_model(self) -> List[str]:
+        self.g_logger.logo(self.prompt, level=LEVEL.VERBOSE)
+        return self.model.generate(
+            self.prompt,
+            batch_size=self.batch_size,
+            temperature=self.temperature,
+            max_length=1024,
+        )
 
     # generation
     def generate(self, **kwargs) -> Union[List[str], bool]:

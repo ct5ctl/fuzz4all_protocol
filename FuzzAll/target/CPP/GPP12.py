@@ -9,7 +9,6 @@ from FuzzAll.model import make_model
 # TODO: fix template to within their own folder, kinda of like a dump folder for user
 from FuzzAll.target.CPP.template import cpp_is_scoped_enum, cpp_optional, cpp_span
 from FuzzAll.target.target import FResult, Target
-from FuzzAll.util.api_request import create_config, request_engine
 from FuzzAll.util.Logger import LEVEL
 from FuzzAll.util.util import comment_remover, simple_parse
 
@@ -20,26 +19,11 @@ return 0;
 """
 
 
-def _create_chatgpt_docstring_template(
-    system_message: str, user_message: str, docstring: str, example: str, first: str
-):
-    messages = [{"role": "system", "content": system_message}]
-    messages.append({"role": "user", "content": docstring})
-    messages.append({"role": "user", "content": example})
-    if first != "":
-        messages.append({"role": "user", "content": user_message})
-        messages.append({"role": "assistant", "content": "```\n{}\n```".format(first)})
-    messages.append({"role": "user", "content": user_message})
-    return messages
-
-
 class GPP12Target(Target):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.model = None  # to be declared
         self.SYSTEM_MESSAGE = "You are a C++ Fuzzer"
         # stateful objects that change
-        self.prompt = ""
         if kwargs["template"] == "cpp_span":
             self.prompt_used = cpp_span
         elif kwargs["template"] == "cpp_is_scoped_enum":
@@ -48,10 +32,6 @@ class GPP12Target(Target):
             self.prompt_used = cpp_optional
         else:
             raise NotImplementedError
-        self.initial_prompt = None
-        self.prompt = None
-        self.batch_size = kwargs["bs"]
-        self.temperature = kwargs["temperature"]
         # TODO: strategies
 
     def write_back_file(self, code):
@@ -69,41 +49,6 @@ class GPP12Target(Target):
 
     def wrap_prompt(self, prompt: str) -> str:
         return f"/* {prompt}*/\n{self.prompt_used['separator']}\n{self.prompt_used['begin']}"
-
-    def initialize(self):
-        self.m_logger.logo(
-            "Initializing ... this may take a while ...", level=LEVEL.INFO
-        )
-        self.initial_prompt = self.auto_prompt(message=self.prompt_used["docstring"])
-        self.prompt = self.initial_prompt
-        self.m_logger.logo("Loading model ...", level=LEVEL.INFO)
-        self.model = make_model(eos=self.prompt_used["separator"])
-        self.m_logger.logo("Model Loaded", level=LEVEL.INFO)
-        self.m_logger.logo("Done", level=LEVEL.INFO)
-
-    def generate_chatgpt(self) -> List[str]:
-        messages = _create_chatgpt_docstring_template(
-            self.SYSTEM_MESSAGE,
-            self.prompt_used["separator"],
-            self.prompt_used["docstring"],
-            self.prompt_used["example_code"],
-            "",
-        )
-        config = create_config(
-            prev={}, messages=messages, max_tokens=512, temperature=1.3
-        )
-        ret = request_engine(config)
-        func = comment_remover(simple_parse(ret["choices"][0]["message"]["content"]))
-        return [func]
-
-    def generate_model(self) -> List[str]:
-        self.g_logger.logo(self.prompt, level=LEVEL.VERBOSE)
-        return self.model.generate(
-            self.prompt,
-            batch_size=self.batch_size,
-            temperature=self.temperature,
-            max_length=1024,
-        )
 
     def generate(self, **kwargs) -> Union[List[str], bool]:
         try:

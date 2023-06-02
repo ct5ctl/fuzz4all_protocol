@@ -32,3 +32,16 @@ def simple_parse(gen_body: str):
     else:
         func = ""
     return func
+
+
+def create_chatgpt_docstring_template(
+    system_message: str, user_message: str, docstring: str, example: str, first: str
+):
+    messages = [{"role": "system", "content": system_message}]
+    messages.append({"role": "user", "content": docstring})
+    messages.append({"role": "user", "content": example})
+    if first != "":
+        messages.append({"role": "user", "content": user_message})
+        messages.append({"role": "assistant", "content": "```\n{}\n```".format(first)})
+    messages.append({"role": "user", "content": user_message})
+    return messages

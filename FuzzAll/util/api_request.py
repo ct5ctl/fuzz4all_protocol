@@ -57,7 +57,7 @@ def request_engine(config):
     while ret is None:
         try:
             signal.signal(signal.SIGALRM, handler)
-            signal.alarm(60)  # wait 10
+            signal.alarm(120)  # wait 10
             ret = openai.ChatCompletion.create(**config)
             signal.alarm(0)
         except openai.error.InvalidRequestError as e:
