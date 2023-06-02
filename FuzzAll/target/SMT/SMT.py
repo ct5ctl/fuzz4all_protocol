@@ -1,11 +1,17 @@
 import subprocess
+import time
+from typing import List, Union
 
+import torch
+
+from FuzzAll.target.SMT.template import smt2_lia
 from FuzzAll.target.target import FResult, Target
+from FuzzAll.util.Logger import LEVEL
+from FuzzAll.util.util import comment_remover
 
 
 def _check_sat(stdout):
     sat = ""
-
     for x in stdout.splitlines():
         if "an invalid model was generated" in x.strip():
             sat = "invalid model"
@@ -47,9 +53,10 @@ def _check_cvc5_parse_error(stdout):
 
 # remove logic set which can lead to parse errors
 def clean_logic(code):
-    clean_code = "\n".join(
-        [x for x in code.splitlines() if not x.startswith("(set-logic")]
-    )
+    # clean_code = "\n".join(
+    #     [x for x in code.splitlines() if not x.startswith("(set-logic")]
+    # )
+    clean_code = code
     clean_code = "\n".join(
         [x for x in clean_code.splitlines() if not x.startswith("(set-option :")]
     )
@@ -62,30 +69,97 @@ def clean_logic(code):
 class SMTTarget(Target):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.SYSTEM_MESSAGE = "You are a SMT Fuzzer"
+        self.model = None  # to be declared
+        if kwargs["template"] == "smt2_lia":
+            self.prompt_used = smt2_lia
+        else:
+            raise NotImplementedError
+        # TODO: strategies
 
     def write_back_file(self, code):
-        with open("/tmp/temp{}.smt2".format(self.CURRENT_TIME), "w") as f:
-            f.write(code)
+        try:
+            with open(
+                "/tmp/temp{}.smt2".format(self.CURRENT_TIME), "w", encoding="utf-8"
+            ) as f:
+                f.write(code)
+        except:
+            pass
+
+    def validate_prompt(self, prompt: str):
+        # TODO
+        return 0
+
+    def wrap_prompt(self, prompt: str) -> str:
+        return (
+            f"; {prompt}\n{self.prompt_used['separator']}\n{self.prompt_used['begin']}"
+        )
+
+    def generate(self, **kwargs) -> Union[List[str], bool]:
+        try:
+            fos = self.generate_model()
+        except RuntimeError:
+            # catch cuda out of memory error.
+            self.m_logger.logo("cuda out of memory...", level=LEVEL.INFO)
+            del self.model
+            torch.cuda.empty_cache()
+            return False
+        new_fos = []
+        for fo in fos:
+            self.g_logger.logo("========== sample =========", level=LEVEL.VERBOSE)
+            new_fos.append(clean_logic(self.prompt_used["begin"] + "\n" + fo))
+            self.g_logger.logo(
+                clean_logic(self.prompt_used["begin"] + "\n" + fo), level=LEVEL.VERBOSE
+            )
+            self.g_logger.logo("========== sample =========", level=LEVEL.VERBOSE)
+        return new_fos
+
+    def filter(self, code) -> bool:
+        if "assert" not in code:
+            return False
+        return True
+
+    # remove any comments, or blank lines
+    def clean_code(self, code: str) -> str:
+        # TODO remove comments
+        code = "\n".join(
+            [
+                line
+                for line in code.split("\n")
+                if line.strip() != "" and line.strip() != self.prompt_used["begin"]
+            ]
+        )
+        return code
+
+    def update(self, **kwargs):
+        new_code = ""
+        for result, code in kwargs["prev"]:
+            if result == FResult.SAFE and self.filter(code):
+                new_code = self.clean_code(code)
+        if new_code != "":
+            self.prompt = (
+                self.initial_prompt
+                + "\n"
+                + new_code
+                + "\n"
+                + self.prompt_used["separator"]
+                + "\n"
+                + self.prompt_used["begin"]
+            )
 
     def validate_individual(self, filename) -> (FResult, str):
         # TODO rework this entire algo since its very scattered currently
-        self.logger.logo("Validating {} ...".format(filename))
-        with open(filename, "r") as f:
-            code = f.read()
-        self.write_back_file(clean_logic(code))
+
+        # run cvc5
         try:
             cvc_exit_code = subprocess.run(
-                "cvc5 -m -i -q --check-models --lang smt2 /tmp/temp{}.smt2".format(
-                    self.CURRENT_TIME, self.CURRENT_TIME
-                ),
+                f"cvc5 -m -i -q --check-models --lang smt2 {filename}",
                 shell=True,
                 capture_output=True,
                 text=True,
                 timeout=5,
             )
         except subprocess.TimeoutExpired as te:
-            pname = "'temp{}.smt2'".format(self.CURRENT_TIME)
+            pname = f"'{filename}'"
             subprocess.run(
                 ["ps -ef | grep " + pname + " | grep -v grep | awk '{print $2}'"],
                 shell=True,
@@ -100,19 +174,18 @@ class SMTTarget(Target):
             )  # kill all tests thank you
             return FResult.TIMED_OUT, "CVC5 Timed out"
 
+        # run z3
         try:
             # add "t" as input to throw in shell
             z3_exit_code = subprocess.run(
-                "printf 't' | z3 model_validate=true /tmp/temp{}.smt2".format(
-                    self.CURRENT_TIME
-                ),
+                f"printf 't' | z3 model_validate=true {filename}",
                 shell=True,
                 capture_output=True,
                 text=True,
                 timeout=5,
             )
         except subprocess.TimeoutExpired as te:
-            pname = "'temp{}.smt2'".format(self.CURRENT_TIME)
+            pname = f"'{filename}'"
             subprocess.run(
                 ["ps -ef | grep " + pname + " | grep -v grep | awk '{print $2}'"],
                 shell=True,

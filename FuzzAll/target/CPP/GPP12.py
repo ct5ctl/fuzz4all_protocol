@@ -4,13 +4,11 @@ from typing import List, Union
 
 import torch
 
-from FuzzAll.model import make_model
-
 # TODO: fix template to within their own folder, kinda of like a dump folder for user
 from FuzzAll.target.CPP.template import cpp_is_scoped_enum, cpp_optional, cpp_span
 from FuzzAll.target.target import FResult, Target
 from FuzzAll.util.Logger import LEVEL
-from FuzzAll.util.util import comment_remover, simple_parse
+from FuzzAll.util.util import comment_remover
 
 main_code = """
 int main(){
@@ -23,7 +21,6 @@ class GPP12Target(Target):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.SYSTEM_MESSAGE = "You are a C++ Fuzzer"
-        # stateful objects that change
         if kwargs["template"] == "cpp_span":
             self.prompt_used = cpp_span
         elif kwargs["template"] == "cpp_is_scoped_enum":
