@@ -4,7 +4,7 @@ from typing import List, Union
 
 import torch
 
-from FuzzAll.target.GO.template import go_atomic
+from FuzzAll.target.GO.template import go_atomic, go_heap
 from FuzzAll.target.target import FResult, Target
 from FuzzAll.util.Logger import LEVEL
 from FuzzAll.util.util import comment_remover
@@ -15,6 +15,8 @@ class GOTarget(Target):
         super().__init__(**kwargs)
         if kwargs["template"] == "go_atomic":
             self.prompt_used = go_atomic
+        elif kwargs["template"] == "go_heap":
+            self.prompt_used = go_heap
         else:
             raise NotImplementedError
         # TODO: strategies
