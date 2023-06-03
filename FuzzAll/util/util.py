@@ -2,7 +2,7 @@ import re
 
 
 def comment_remover(text, lang="cpp"):
-    if lang == "cpp":
+    if lang == "cpp" or lang == "go":
 
         def replacer(match):
             s = match.group(0)
