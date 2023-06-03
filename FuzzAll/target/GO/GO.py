@@ -102,7 +102,7 @@ class GOTarget(Target):
                 text=True,
             )
         except subprocess.TimeoutExpired as te:
-            pname = f"'temp{self.CURRENT_TIME}.go'"
+            pname = f"'temp{self.CURRENT_TIME}'"
             subprocess.run(
                 ["ps -ef | grep " + pname + " | grep -v grep | awk '{print $2}'"],
                 shell=True,
