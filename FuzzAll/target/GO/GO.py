@@ -19,7 +19,6 @@ class GOTarget(Target):
             self.prompt_used = go_heap
         else:
             raise NotImplementedError
-        # TODO: strategies
 
     def validate_prompt(self, prompt: str):
         # TODO
@@ -61,22 +60,6 @@ class GOTarget(Target):
         code = comment_remover(code)
         code = "\n".join([line for line in code.split("\n") if line.strip() != ""])
         return code
-
-    def update(self, **kwargs):
-        new_code = ""
-        for result, code in kwargs["prev"]:
-            if result == FResult.SAFE and self.filter(code):
-                new_code = self.clean_code(code)
-        if new_code != "":
-            self.prompt = (
-                self.initial_prompt
-                + "\n"
-                + new_code
-                + "\n"
-                + self.prompt_used["separator"]
-                + "\n"
-                + self.prompt_used["begin"]
-            )
 
     def write_back_file(self, code):
         try:

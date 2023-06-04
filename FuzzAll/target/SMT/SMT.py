@@ -76,7 +76,6 @@ class SMTTarget(Target):
             self.prompt_used = smt2_auflia
         else:
             raise NotImplementedError
-        # TODO: strategies
 
     def write_back_file(self, code):
         try:
@@ -131,22 +130,6 @@ class SMTTarget(Target):
             ]
         )
         return code
-
-    def update(self, **kwargs):
-        new_code = ""
-        for result, code in kwargs["prev"]:
-            if result == FResult.SAFE and self.filter(code):
-                new_code = self.clean_code(code)
-        if new_code != "":
-            self.prompt = (
-                self.initial_prompt
-                + "\n"
-                + new_code
-                + "\n"
-                + self.prompt_used["separator"]
-                + "\n"
-                + self.prompt_used["begin"]
-            )
 
     def validate_individual(self, filename) -> (FResult, str):
         # TODO rework this entire algo since its very scattered currently

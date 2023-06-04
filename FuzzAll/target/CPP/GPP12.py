@@ -84,22 +84,6 @@ class GPP12Target(Target):
         )
         return code
 
-    def update(self, **kwargs):
-        new_code = ""
-        for result, code in kwargs["prev"]:
-            if result == FResult.SAFE and self.filter(code):
-                new_code = self.clean_code(code)
-        if new_code != "":
-            self.prompt = (
-                self.initial_prompt
-                + "\n"
-                + new_code
-                + "\n"
-                + self.prompt_used["separator"]
-                + "\n"
-                + self.prompt_used["begin"]
-            )
-
     def validate_individual(self, filename) -> (FResult, str):
         # check without -c option (+ linking)
         try:

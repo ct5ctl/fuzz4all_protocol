@@ -156,9 +156,29 @@ class Target(object):
     def generate(self, **kwargs) -> Union[List[str], bool]:
         raise NotImplementedError
 
+    # helper for updating
+    def filter(self, code: str) -> bool:
+        raise NotImplementedError
+
+    def clean_code(self, code: str) -> str:
+        raise NotImplementedError
+
     # update
     def update(self, **kwargs):
-        raise NotImplementedError
+        new_code = ""
+        for result, code in kwargs["prev"]:
+            if result == FResult.SAFE and self.filter(code):
+                new_code = self.clean_code(code)
+        if new_code != "":
+            self.prompt = (
+                self.initial_prompt
+                + "\n"
+                + new_code
+                + "\n"
+                + self.prompt_used["separator"]
+                + "\n"
+                + self.prompt_used["begin"]
+            )
 
     # validation
     def validate_individual(self, filename) -> (FResult, str):
