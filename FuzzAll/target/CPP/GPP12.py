@@ -45,7 +45,10 @@ class GPP12Target(Target):
         return 0
 
     def wrap_prompt(self, prompt: str) -> str:
-        return f"/* {prompt}*/\n{self.prompt_used['separator']}\n{self.prompt_used['begin']}"
+        return f"/* {prompt} */\n{self.prompt_used['separator']}\n{self.prompt_used['begin']}"
+
+    def wrap_in_comment(self, prompt: str) -> str:
+        return f"/* {prompt} */"
 
     def generate(self, **kwargs) -> Union[List[str], bool]:
         try:

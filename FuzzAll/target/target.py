@@ -1,5 +1,6 @@
 import glob
 import os
+import random
 import time
 from enum import Enum
 from typing import List, Union
@@ -31,24 +32,39 @@ class Target(object):
         self.language = language
         self.folder = folder
         self.timeout = timeout
+        self.CURRENT_TIME = time.time()
+        # model based variables
+        self.batch_size = kwargs["bs"]
+        self.temperature = kwargs["temperature"]
+        self.model = None
         # loggers
         self.g_logger = Logger(self.folder, "log_generation.txt", level=kwargs["level"])
         self.v_logger = Logger(self.folder, "log_validation.txt", level=kwargs["level"])
         # main logger for system messages
         self.m_logger = Logger(self.folder, "log.txt")
-        self.CURRENT_TIME = time.time()
+        # system messages for prompting
         self.SYSTEM_MESSAGE = None
         self.AP_SYSTEM_MESSAGE = "You are an auto-prompting tool"
         self.AP_INSTRUCTION = (
             "Please summarize the above documentation in a concise manner to describe the usage and "
             "functionality of the target "
         )
+        # prompt based variables
         self.prompt_used = None
-        self.batch_size = kwargs["bs"]
-        self.temperature = kwargs["temperature"]
-        self.model = None
         self.prompt = None
         self.initial_prompt = None
+        self.prev_example = None
+        # prompt strategies
+        self.se_prompt = self.wrap_in_comment(
+            "Please create a semantically equivalent program to the previous "
+            "generation"
+        )
+        self.m_prompt = self.wrap_in_comment(
+            "Please create a mutated program that modifies the previous generation"
+        )
+        self.c_prompt = self.wrap_in_comment(
+            "Please combine the two previous programs into a single program"
+        )
 
     # used for fuzzing to check valid syntax
     def check_syntax_valid(self, code: str) -> bool:
@@ -64,6 +80,9 @@ class Target(object):
     # for example we might want to encode the prompt as a docstring comment to facilitate better generation using
     # smaller LLMs
     def wrap_prompt(self, prompt: str) -> str:
+        raise NotImplementedError
+
+    def wrap_in_comment(self, prompt: str) -> str:
         raise NotImplementedError
 
     def _create_auto_prompt_message(self, message: str) -> List[dict]:
@@ -124,7 +143,14 @@ class Target(object):
         self.initial_prompt = self.auto_prompt(message=self.prompt_used["docstring"])
         self.prompt = self.initial_prompt
         self.m_logger.logo("Loading model ...", level=LEVEL.INFO)
-        self.model = make_model(eos=self.prompt_used["separator"])
+        self.model = make_model(
+            eos=[
+                self.prompt_used["separator"],
+                self.se_prompt,
+                self.m_prompt,
+                self.c_prompt,
+            ]
+        )
         self.m_logger.logo("Model Loaded", level=LEVEL.INFO)
         self.m_logger.logo("Done", level=LEVEL.INFO)
 
@@ -163,22 +189,41 @@ class Target(object):
     def clean_code(self, code: str) -> str:
         raise NotImplementedError
 
+    def update_strategy(self, new_code: str) -> str:
+        while 1:
+            strategy = random.randint(0, 3)
+            # generate new code using separator
+            if strategy == 0:
+                return f"\n{new_code}\n{self.prompt_used['separator']}\n"
+            # mutate existing code
+            elif strategy == 1:
+                return f"\n{new_code}\n{self.m_prompt}\n"
+            # semantically equivalent code generation
+            elif strategy == 2:
+                return f"\n{new_code}\n{self.se_prompt}\n"
+            # combine previous two code generations
+            else:
+                if self.prev_example is not None:
+                    return f"\n{self.prev_example}\n{self.prompt_used['separator']}\n{self.prompt_used['begin']}\n{new_code}\n{self.c_prompt}\n"
+
     # update
     def update(self, **kwargs):
         new_code = ""
         for result, code in kwargs["prev"]:
-            if result == FResult.SAFE and self.filter(code):
+            if (
+                result == FResult.SAFE
+                and self.filter(code)
+                and self.clean_code(code) != self.prev_example
+            ):
                 new_code = self.clean_code(code)
         if new_code != "":
             self.prompt = (
                 self.initial_prompt
-                + "\n"
-                + new_code
-                + "\n"
-                + self.prompt_used["separator"]
-                + "\n"
+                + self.update_strategy(new_code)
                 + self.prompt_used["begin"]
+                + "\n"
             )
+            self.prev_example = new_code
 
     # validation
     def validate_individual(self, filename) -> (FResult, str):

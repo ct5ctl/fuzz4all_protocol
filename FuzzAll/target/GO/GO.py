@@ -29,6 +29,9 @@ class GOTarget(Target):
             f"// {prompt}\n{self.prompt_used['separator']}\n{self.prompt_used['begin']}"
         )
 
+    def wrap_in_comment(self, prompt: str) -> str:
+        return f"// {prompt}"
+
     def generate(self, **kwargs) -> Union[List[str], bool]:
         try:
             fos = self.generate_model()
