@@ -4,7 +4,7 @@ from typing import List, Union
 
 import torch
 
-from FuzzAll.target.SMT.template import smt2_lia
+from FuzzAll.target.SMT.template import smt2_auflia, smt2_lia
 from FuzzAll.target.target import FResult, Target
 from FuzzAll.util.Logger import LEVEL
 from FuzzAll.util.util import comment_remover
@@ -72,6 +72,8 @@ class SMTTarget(Target):
         self.model = None  # to be declared
         if kwargs["template"] == "smt2_lia":
             self.prompt_used = smt2_lia
+        elif kwargs["template"] == "smt2_auflia":
+            self.prompt_used = smt2_auflia
         else:
             raise NotImplementedError
         # TODO: strategies
