@@ -50,6 +50,7 @@ class Target(object):
             "functionality of the target "
         )
         # prompt based variables
+        self.hw = kwargs["use_kw"]
         self.prompt_used = None
         self.prompt = None
         self.initial_prompt = None
@@ -65,6 +66,7 @@ class Target(object):
         self.c_prompt = self.wrap_in_comment(
             "Please combine the two previous programs into a single program"
         )
+        self.p_strategy = kwargs["prompt_strategy"]
 
     # used for fuzzing to check valid syntax
     def check_syntax_valid(self, code: str) -> bool:
@@ -96,38 +98,45 @@ class Target(object):
 
         # if we have already done auto-prompting, just return the best prompt
         if os.path.exists(self.folder + "/prompts/best_prompt.txt"):
+            self.m_logger.logo("Use existing prompt ... ", level=LEVEL.INFO)
             with open(self.folder + "/prompts/best_prompt.txt", "r") as f:
                 return f.read()
-
-        message = kwargs["message"]
-        # first run with temperature 0.0 to get the first prompt
-        config = create_config(
-            {},
-            self._create_auto_prompt_message(message),
-            max_tokens=500,
-            temperature=0.0,
-            model="gpt-4",
-        )
-        response = request_engine(config)
-        greedy_prompt = self.wrap_prompt(response["choices"][0]["message"]["content"])
-        with open(self.folder + "/prompts/greedy_prompt.txt", "w") as f:
-            f.write(greedy_prompt)
-        # repeated runs with temperature 1 to get additional prompts
-        # choose the prompt with max score
-        best_prompt, best_score = greedy_prompt, self.validate_prompt(greedy_prompt)
-        # for i in track(range(10), description="Generating prompts..."):
-        #     config = create_config({}, [message], max_tokens=500, temperature=1.0, model="gpt-4")
-        #     response = request_engine(config)
-        #     prompt = response["choices"][0]["message"]["content"]
-        #     with open(self.folder + "/prompts/prompt_{}.txt".format(i), "w") as f:
-        #         f.write(prompt)
-        #     score = self.validate_prompt(prompt)
-        #     if score > best_score:
-        #         best_score = score
-        #         best_prompt = prompt
-        #     # dump score
-        #     with open(self.folder + "/prompts/score_{}.txt".format(i), "w") as f:
-        #         f.write(str(score))
+        if kwargs["hw"]:
+            self.m_logger.logo("Use handwritten prompt ... ", level=LEVEL.INFO)
+            best_prompt = self.wrap_prompt(kwargs["hw_prompt"])
+        else:
+            self.m_logger.logo("Use auto-prompting prompt ... ", level=LEVEL.INFO)
+            message = kwargs["message"]
+            # first run with temperature 0.0 to get the first prompt
+            config = create_config(
+                {},
+                self._create_auto_prompt_message(message),
+                max_tokens=500,
+                temperature=0.0,
+                model="gpt-4",
+            )
+            response = request_engine(config)
+            greedy_prompt = self.wrap_prompt(
+                response["choices"][0]["message"]["content"]
+            )
+            with open(self.folder + "/prompts/greedy_prompt.txt", "w") as f:
+                f.write(greedy_prompt)
+            # repeated runs with temperature 1 to get additional prompts
+            # choose the prompt with max score
+            best_prompt, best_score = greedy_prompt, self.validate_prompt(greedy_prompt)
+            # for i in track(range(10), description="Generating prompts..."):
+            #     config = create_config({}, [message], max_tokens=500, temperature=1.0, model="gpt-4")
+            #     response = request_engine(config)
+            #     prompt = response["choices"][0]["message"]["content"]
+            #     with open(self.folder + "/prompts/prompt_{}.txt".format(i), "w") as f:
+            #         f.write(prompt)
+            #     score = self.validate_prompt(prompt)
+            #     if score > best_score:
+            #         best_score = score
+            #         best_prompt = prompt
+            #     # dump score
+            #     with open(self.folder + "/prompts/score_{}.txt".format(i), "w") as f:
+            #         f.write(str(score))
 
         # dump best prompt
         with open(self.folder + "/prompts/best_prompt.txt", "w") as f:
@@ -140,7 +149,11 @@ class Target(object):
         self.m_logger.logo(
             "Initializing ... this may take a while ...", level=LEVEL.INFO
         )
-        self.initial_prompt = self.auto_prompt(message=self.prompt_used["docstring"])
+        self.initial_prompt = self.auto_prompt(
+            message=self.prompt_used["docstring"],
+            hw_prompt=self.prompt_used["hw_prompt"] if self.hw else None,
+            hw=self.hw,
+        )
         self.prompt = self.initial_prompt
         self.m_logger.logo("Loading model ...", level=LEVEL.INFO)
         self.model = make_model(
@@ -191,7 +204,7 @@ class Target(object):
 
     def update_strategy(self, new_code: str) -> str:
         while 1:
-            strategy = random.randint(0, 3)
+            strategy = random.randint(0, self.p_strategy)
             # generate new code using separator
             if strategy == 0:
                 return f"\n{new_code}\n{self.prompt_used['separator']}\n"
