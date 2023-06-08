@@ -5,7 +5,12 @@ from typing import List, Union
 import torch
 
 # TODO: fix template to within their own folder, kinda of like a dump folder for user
-from FuzzAll.target.CPP.template import cpp_is_scoped_enum, cpp_optional, cpp_span
+from FuzzAll.target.CPP.template import (
+    cpp_is_scoped_enum,
+    cpp_optional,
+    cpp_span,
+    cpp_variant,
+)
 from FuzzAll.target.target import FResult, Target
 from FuzzAll.util.Logger import LEVEL
 from FuzzAll.util.util import comment_remover
@@ -27,6 +32,8 @@ class GPP12Target(Target):
             self.prompt_used = cpp_is_scoped_enum
         elif kwargs["template"] == "cpp_optional":
             self.prompt_used = cpp_optional
+        elif kwargs["template"] == "cpp_variant":
+            self.prompt_used = cpp_variant
         else:
             raise NotImplementedError
         # TODO: strategies
