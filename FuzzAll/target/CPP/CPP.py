@@ -23,7 +23,7 @@ return 0;
 """
 
 
-class GPP12Target(Target):
+class CPPTarget(Target):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.SYSTEM_MESSAGE = "You are a C++ Fuzzer"
@@ -39,7 +39,6 @@ class GPP12Target(Target):
             self.prompt_used = cpp_expected
         else:
             raise NotImplementedError
-        # TODO: strategies
 
     def write_back_file(self, code):
         try:
@@ -97,13 +96,11 @@ class GPP12Target(Target):
         )
         return code
 
-    def validate_individual(self, filename) -> (FResult, str):
+    def validate_compiler(self, compiler, filename) -> (FResult, str):
         # check without -c option (+ linking)
         try:
             exit_code = subprocess.run(
-                "g++ -x c++ -std=c++23 {} -o /tmp/out{}".format(
-                    filename, self.CURRENT_TIME
-                ),
+                f"{compiler} -x c++ -std=c++23 {filename} -o /tmp/out{self.CURRENT_TIME}",
                 shell=True,
                 capture_output=True,
                 encoding="utf-8",
@@ -111,7 +108,7 @@ class GPP12Target(Target):
                 text=True,
             )
         except subprocess.TimeoutExpired as te:
-            pname = "'{}'".format(filename)
+            pname = f"'{filename}'"
             subprocess.run(
                 ["ps -ef | grep " + pname + " | grep -v grep | awk '{print $2}'"],
                 shell=True,
@@ -124,7 +121,7 @@ class GPP12Target(Target):
                 ],
                 shell=True,
             )  # kill all tests thank you
-            return FResult.TIMED_OUT, "gcc"
+            return FResult.TIMED_OUT, compiler
 
         if exit_code.returncode == 1:
             if "undefined reference to `main'" in exit_code.stderr:
@@ -135,9 +132,7 @@ class GPP12Target(Target):
                     pass
                 self.write_back_file(code)
                 exit_code = subprocess.run(
-                    "g++ -std=c++23 -x c++ /tmp/temp{}.cpp -o /tmp/out{}".format(
-                        self.CURRENT_TIME, self.CURRENT_TIME
-                    ),
+                    f"{compiler} -std=c++23 -x c++ /tmp/temp{self.CURRENT_TIME}.cpp -o /tmp/out{self.CURRENT_TIME}",
                     shell=True,
                     capture_output=True,
                     encoding="utf-8",
@@ -150,6 +145,22 @@ class GPP12Target(Target):
             return FResult.ERROR, exit_code.stderr
 
         return FResult.SAFE, "its safe"
+
+    def validate_individual(self, filename) -> (FResult, str):
+        gcc_fresult, gcc_msg = self.validate_compiler("g++", filename)
+        clang_fresult, clang_msg = self.validate_compiler("clang++", filename)
+        if gcc_fresult == FResult.SAFE and clang_fresult == FResult.SAFE:
+            return FResult.SAFE, "its safe"
+        elif gcc_fresult == FResult.ERROR or clang_fresult == FResult.ERROR:
+            return FResult.ERROR, f"gcc: {gcc_msg}\nclang:{clang_msg}"
+        elif gcc_fresult != FResult.TIMED_OUT and clang_fresult == FResult.TIMED_OUT:
+            return FResult.ERROR, f"clang timed out but gcc was fine"
+        elif gcc_fresult == FResult.TIMED_OUT and clang_fresult != FResult.TIMED_OUT:
+            return FResult.ERROR, f"gcc timed out but clang was fine"
+        elif gcc_fresult == FResult.FAILURE or clang_fresult == FResult.FAILURE:
+            return FResult.FAILURE, f"gcc: {gcc_msg}\nclang:{clang_msg}"
+        else:
+            return FResult.TIMED_OUT, f"both timed out"
 
     def check_syntax_valid(self, code):
         with open("/tmp/temp{}.cpp".format(self.CURRENT_TIME), "w") as f:

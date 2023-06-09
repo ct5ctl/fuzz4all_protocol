@@ -8,9 +8,6 @@ from rich.traceback import install
 
 install()
 CURRENT_TIME = time.time()
-# to be changed
-COVERAGE_FOLDER = "/home/steven/gcc-13-build-coverage/gcc"
-GCOV = "/home/steven/GCC-13-coverage/bin/gcov"
 
 from rich.progress import (
     BarColumn,
@@ -56,16 +53,16 @@ def run_compile(compiler: str, source: str, pre_flags: str, post_flags: str):
     return
 
 
-def get_coverage():
+def get_coverage(args):
     subprocess.run(
-        f"cd {COVERAGE_FOLDER}; lcov --capture --directory . --output-file coverage.info --gcov-tool {GCOV}",
+        f"cd {args.cov_folder}; lcov --capture --directory . --output-file coverage.info --gcov-tool {args.gcov}",
         shell=True,
         encoding="utf-8",
         text=True,
         capture_output=True,
     )
     exit_code = subprocess.run(
-        f"cd {COVERAGE_FOLDER}; lcov --summary coverage.info",
+        f"cd {args.cov_folder}; lcov --summary coverage.info",
         shell=True,
         encoding="utf-8",
         text=True,
@@ -81,9 +78,9 @@ def get_coverage():
     return line_cov, func_cov
 
 
-def clean_coverage():
+def clean_coverage(args):
     subprocess.run(
-        f"cd {COVERAGE_FOLDER}; lcov --zerocounters --directory .",
+        f"cd {args.cov_folder}; lcov --zerocounters --directory .",
         shell=True,
         encoding="utf-8",
     )
@@ -98,7 +95,7 @@ def coverage_loop(args):
         TimeElapsedColumn(),
     ) as p:
         # clean coverage
-        clean_coverage()
+        clean_coverage(args)
 
         # loop through all files in folder in alphanumeric order
         files = glob.glob(args.folder + "/*.fuzz")
@@ -111,7 +108,7 @@ def coverage_loop(args):
             )
             if (index + 1) % args.interval == 0:
                 # get the coverage
-                line_cov, func_cov = get_coverage()
+                line_cov, func_cov = get_coverage(args)
                 # append to csv file
                 with open(args.folder + "/coverage.csv", "a") as f:
                     f.write(f"{index + 1},{line_cov},{func_cov}\n")
@@ -124,6 +121,8 @@ def main():
     parser.add_argument("--compiler", type=str, required=True)
     parser.add_argument("--folder", type=str, required=True)
     parser.add_argument("--interval", type=int, required=True)
+    parser.add_argument("--cov_folder", type=str, required=True)
+    parser.add_argument("--gcov", type=str, required=True)
     args = parser.parse_args()
 
     coverage_loop(args)

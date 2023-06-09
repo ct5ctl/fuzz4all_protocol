@@ -1,4 +1,4 @@
-from FuzzAll.target.CPP.GPP12 import GPP12Target
+from FuzzAll.target.CPP.CPP import CPPTarget
 from FuzzAll.target.GO.GO import GOTarget
 from FuzzAll.target.SMT.SMT import SMTTarget
 
@@ -11,7 +11,7 @@ def make_target(args, parser):
     parser.add_argument("--prompt_strategy", type=int, required=True)
     args = parser.parse_args()
     if args.language == "cpp":  # GCC
-        return args, GPP12Target(
+        return args, CPPTarget(
             language="cpp",
             folder=args.folder,
             template=args.template,
