@@ -104,7 +104,10 @@ def coverage_loop(args):
         for file in p.track(files):
             # compile the file
             run_compile(
-                args.compiler, file, "-x c++ -std=c++23", f"-o /tmp/out{CURRENT_TIME}"
+                args.compiler,
+                file,
+                f"-x c++ -std=c++23 {args.e_include}",
+                f"-o /tmp/out{CURRENT_TIME}",
             )
             if args.opt:
                 opt = ["-O3", "-O2", "-O1"]
@@ -112,7 +115,7 @@ def coverage_loop(args):
                     run_compile(
                         args.compiler,
                         file,
-                        f"-x c++ -std=c++23 {o}",
+                        f"-x c++ -std=c++23 {o} {args.e_include}",
                         f"-o /tmp/out{CURRENT_TIME}",
                     )
             if (index + 1) % args.interval == 0:
@@ -136,6 +139,7 @@ def main():
     parser.add_argument("--interval", type=int, required=True)
     parser.add_argument("--cov_folder", type=str, required=True)
     parser.add_argument("--gcov", type=str, required=True)
+    parser.add_argument("--e_include", type=str, default="")  # for csmith
     parser.add_argument("--opt", action="store_true")
     args = parser.parse_args()
 
