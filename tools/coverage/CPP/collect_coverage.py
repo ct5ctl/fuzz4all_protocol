@@ -106,12 +106,25 @@ def coverage_loop(args):
             run_compile(
                 args.compiler, file, "-x c++ -std=c++23", f"-o /tmp/out{CURRENT_TIME}"
             )
+            if args.opt:
+                opt = ["-O3", "-O2", "-O1"]
+                for o in opt:
+                    run_compile(
+                        args.compiler,
+                        file,
+                        f"-x c++ -std=c++23 {o}",
+                        f"-o /tmp/out{CURRENT_TIME}",
+                    )
             if (index + 1) % args.interval == 0:
                 # get the coverage
                 line_cov, func_cov = get_coverage(args)
                 # append to csv file
-                with open(args.folder + "/coverage.csv", "a") as f:
-                    f.write(f"{index + 1},{line_cov},{func_cov}\n")
+                if args.opt:
+                    with open(args.folder + "/coverage_opt.csv", "a") as f:
+                        f.write(f"{index + 1},{line_cov},{func_cov}\n")
+                else:
+                    with open(args.folder + "/coverage.csv", "a") as f:
+                        f.write(f"{index + 1},{line_cov},{func_cov}\n")
 
             index += 1
 
@@ -123,6 +136,7 @@ def main():
     parser.add_argument("--interval", type=int, required=True)
     parser.add_argument("--cov_folder", type=str, required=True)
     parser.add_argument("--gcov", type=str, required=True)
+    parser.add_argument("--opt", action="store_true")
     args = parser.parse_args()
 
     coverage_loop(args)
