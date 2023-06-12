@@ -1,5 +1,6 @@
 from FuzzAll.target.CPP.CPP import CPPTarget
 from FuzzAll.target.GO.GO import GOTarget
+from FuzzAll.target.JAVA.JAVA import JAVATarget
 from FuzzAll.target.SMT.SMT import SMTTarget
 
 
@@ -34,6 +35,17 @@ def make_target(args, parser):
         )
     elif args.language == "go":  # GO
         return args, GOTarget(
+            language=args.language,
+            folder=args.folder,
+            template=args.template,
+            bs=args.bs,
+            temperature=args.temperature,
+            use_kw=args.use_hw,
+            prompt_strategy=args.prompt_strategy,
+            level=args.level,
+        )
+    elif args.language == "java":  # Java
+        return args, JAVATarget(
             language=args.language,
             folder=args.folder,
             template=args.template,
