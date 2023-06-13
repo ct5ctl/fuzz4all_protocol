@@ -52,9 +52,27 @@ class CPPTarget(Target):
         except:
             pass
 
-    def validate_prompt(self, prompt):
-        # TODO
-        return 0
+    def validate_prompt(self, prompt: str):
+        fos = self.model.generate(
+            prompt,
+            batch_size=self.batch_size,
+            temperature=self.temperature,
+            max_length=1024,
+        )
+        unique_set = set()
+        score = 0
+        for fo in fos:
+            code = self.prompt_used["begin"] + "\n" + fo
+            self.write_back_file(code)
+            result, _ = self.validate_individual(f"/tmp/temp{self.CURRENT_TIME}.cpp")
+            if (
+                result == FResult.SAFE
+                and self.filter(code)
+                and self.clean_code(code) not in unique_set
+            ):
+                unique_set.add(self.clean_code(code))
+                score += 1
+        return score
 
     def wrap_prompt(self, prompt: str) -> str:
         return f"/* {prompt} */\n{self.prompt_used['separator']}\n{self.prompt_used['begin']}"
@@ -62,30 +80,15 @@ class CPPTarget(Target):
     def wrap_in_comment(self, prompt: str) -> str:
         return f"/* {prompt} */"
 
-    def generate(self, **kwargs) -> Union[List[str], bool]:
-        try:
-            fos = self.generate_model()
-        except RuntimeError:
-            # catch cuda out of memory error.
-            self.m_logger.logo("cuda out of memory...", level=LEVEL.INFO)
-            del self.model
-            torch.cuda.empty_cache()
-            return False
-        new_fos = []
-        for fo in fos:
-            self.g_logger.logo("========== sample =========", level=LEVEL.VERBOSE)
-            new_fos.append(self.prompt_used["begin"] + "\n" + fo)
-            self.g_logger.logo(
-                self.prompt_used["begin"] + "\n" + fo, level=LEVEL.VERBOSE
-            )
-            self.g_logger.logo("========== sample =========", level=LEVEL.VERBOSE)
-        return new_fos
-
     def filter(self, code) -> bool:
         clean_code = code.replace(self.prompt_used["begin"], "").strip()
         if self.prompt_used["target_api"] not in clean_code:
             return False
         return True
+
+    def clean(self, code: str) -> str:
+        code = comment_remover(code)
+        return code
 
     # remove any comments, or blank lines
     def clean_code(self, code: str) -> str:

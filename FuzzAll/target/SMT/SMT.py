@@ -51,21 +51,6 @@ def _check_cvc5_parse_error(stdout):
     return error
 
 
-# remove logic set which can lead to parse errors
-def clean_logic(code):
-    # clean_code = "\n".join(
-    #     [x for x in code.splitlines() if not x.startswith("(set-logic")]
-    # )
-    clean_code = code
-    clean_code = "\n".join(
-        [x for x in clean_code.splitlines() if not x.startswith("(set-option :")]
-    )
-    clean_code = "\n".join(
-        [x for x in clean_code.splitlines() if not x.startswith("(get-proof)")]
-    )
-    return clean_code
-
-
 class SMTTarget(Target):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -98,29 +83,24 @@ class SMTTarget(Target):
     def wrap_in_comment(self, prompt: str) -> str:
         return f"; {prompt}"
 
-    def generate(self, **kwargs) -> Union[List[str], bool]:
-        try:
-            fos = self.generate_model()
-        except RuntimeError:
-            # catch cuda out of memory error.
-            self.m_logger.logo("cuda out of memory...", level=LEVEL.INFO)
-            del self.model
-            torch.cuda.empty_cache()
-            return False
-        new_fos = []
-        for fo in fos:
-            self.g_logger.logo("========== sample =========", level=LEVEL.VERBOSE)
-            new_fos.append(clean_logic(self.prompt_used["begin"] + "\n" + fo))
-            self.g_logger.logo(
-                clean_logic(self.prompt_used["begin"] + "\n" + fo), level=LEVEL.VERBOSE
-            )
-            self.g_logger.logo("========== sample =========", level=LEVEL.VERBOSE)
-        return new_fos
-
     def filter(self, code) -> bool:
         if "assert" not in code:
             return False
         return True
+
+    def clean(self, code: str) -> str:
+        # remove logic set which can lead to parse errors
+        # clean_code = "\n".join(
+        #     [x for x in code.splitlines() if not x.startswith("(set-logic")]
+        # )
+        clean_code = code
+        clean_code = "\n".join(
+            [x for x in clean_code.splitlines() if not x.startswith("(set-option :")]
+        )
+        clean_code = "\n".join(
+            [x for x in clean_code.splitlines() if not x.startswith("(get-proof)")]
+        )
+        return clean_code
 
     # remove any comments, or blank lines
     def clean_code(self, code: str) -> str:
@@ -246,6 +226,7 @@ class SMTTarget(Target):
 
         return FResult.SAFE, "its safe"
 
+    # deprecated
     def check_syntax_valid(self, code):
         with open("/tmp/temp{}.smt2".format(self.CURRENT_TIME), "w") as f:
             f.write(clean_logic(code))

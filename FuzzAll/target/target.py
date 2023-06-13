@@ -5,6 +5,7 @@ import time
 from enum import Enum
 from typing import List, Union
 
+import torch
 from rich.progress import track
 
 from FuzzAll.model import make_model
@@ -124,19 +125,27 @@ class Target(object):
             # repeated runs with temperature 1 to get additional prompts
             # choose the prompt with max score
             best_prompt, best_score = greedy_prompt, self.validate_prompt(greedy_prompt)
-            # for i in track(range(10), description="Generating prompts..."):
-            #     config = create_config({}, [message], max_tokens=500, temperature=1.0, model="gpt-4")
-            #     response = request_engine(config)
-            #     prompt = response["choices"][0]["message"]["content"]
-            #     with open(self.folder + "/prompts/prompt_{}.txt".format(i), "w") as f:
-            #         f.write(prompt)
-            #     score = self.validate_prompt(prompt)
-            #     if score > best_score:
-            #         best_score = score
-            #         best_prompt = prompt
-            #     # dump score
-            #     with open(self.folder + "/prompts/score_{}.txt".format(i), "w") as f:
-            #         f.write(str(score))
+            with open(self.folder + "/prompts/scores.txt", "a") as f:
+                f.write(f"greedy score: {str(best_score)}")
+            for i in track(range(3), description="Generating prompts..."):
+                config = create_config(
+                    {},
+                    self._create_auto_prompt_message(message),
+                    max_tokens=500,
+                    temperature=1,
+                    model="gpt-4",
+                )
+                response = request_engine(config)
+                prompt = self.wrap_prompt(response["choices"][0]["message"]["content"])
+                with open(self.folder + "/prompts/prompt_{}.txt".format(i), "w") as f:
+                    f.write(prompt)
+                score = self.validate_prompt(prompt)
+                if score > best_score:
+                    best_score = score
+                    best_prompt = prompt
+                # dump score
+                with open(self.folder + "/prompts/scores.txt", "a") as f:
+                    f.write(f"\n{i} prompt score: {str(score)}")
 
         # dump best prompt
         with open(self.folder + "/prompts/best_prompt.txt", "w") as f:
@@ -149,12 +158,6 @@ class Target(object):
         self.m_logger.logo(
             "Initializing ... this may take a while ...", level=LEVEL.INFO
         )
-        self.initial_prompt = self.auto_prompt(
-            message=self.prompt_used["docstring"],
-            hw_prompt=self.prompt_used["hw_prompt"] if self.hw else None,
-            hw=self.hw,
-        )
-        self.prompt = self.initial_prompt
         self.m_logger.logo("Loading model ...", level=LEVEL.INFO)
         self.model = make_model(
             eos=[
@@ -165,6 +168,12 @@ class Target(object):
             ]
         )
         self.m_logger.logo("Model Loaded", level=LEVEL.INFO)
+        self.initial_prompt = self.auto_prompt(
+            message=self.prompt_used["docstring"],
+            hw_prompt=self.prompt_used["hw_prompt"] if self.hw else None,
+            hw=self.hw,
+        )
+        self.prompt = self.initial_prompt
         self.m_logger.logo("Done", level=LEVEL.INFO)
 
     def generate_chatgpt(self) -> List[str]:
@@ -193,10 +202,32 @@ class Target(object):
 
     # generation
     def generate(self, **kwargs) -> Union[List[str], bool]:
-        raise NotImplementedError
+        try:
+            fos = self.generate_model()
+        except RuntimeError:
+            # catch cuda out of memory error.
+            self.m_logger.logo("cuda out of memory...", level=LEVEL.INFO)
+            del self.model
+            torch.cuda.empty_cache()
+            return False
+        new_fos = []
+        for fo in fos:
+            self.g_logger.logo("========== sample =========", level=LEVEL.VERBOSE)
+            new_fos.append(self.clean(self.prompt_used["begin"] + "\n" + fo))
+            self.g_logger.logo(
+                self.clean(self.prompt_used["begin"] + "\n" + fo), level=LEVEL.VERBOSE
+            )
+            self.g_logger.logo("========== sample =========", level=LEVEL.VERBOSE)
+        return new_fos
 
     # helper for updating
     def filter(self, code: str) -> bool:
+        raise NotImplementedError
+
+    # difference between clean and clean_code (honestly just backwards compatibility)
+    # but the point is that clean should be applied as soon as generation whereas clean code is used
+    # more so for filtering
+    def clean(self, code: str) -> str:
         raise NotImplementedError
 
     def clean_code(self, code: str) -> str:

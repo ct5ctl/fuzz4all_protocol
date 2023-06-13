@@ -32,31 +32,16 @@ class GOTarget(Target):
     def wrap_in_comment(self, prompt: str) -> str:
         return f"// {prompt}"
 
-    def generate(self, **kwargs) -> Union[List[str], bool]:
-        try:
-            fos = self.generate_model()
-        except RuntimeError:
-            # catch cuda out of memory error.
-            self.m_logger.logo("cuda out of memory...", level=LEVEL.INFO)
-            del self.model
-            torch.cuda.empty_cache()
-            return False
-        new_fos = []
-        for fo in fos:
-            self.g_logger.logo("========== sample =========", level=LEVEL.VERBOSE)
-            new_fos.append(self.prompt_used["begin"] + "\n" + fo)
-            self.g_logger.logo(
-                self.prompt_used["begin"] + "\n" + fo, level=LEVEL.VERBOSE
-            )
-            self.g_logger.logo("========== sample =========", level=LEVEL.VERBOSE)
-        return new_fos
-
     def filter(self, code: str) -> bool:
         code = code.replace(self.prompt_used["begin"], "").strip()
         code = comment_remover(code)
         if self.prompt_used["target_api"] not in code:
             return False
         return True
+
+    def clean(self, code: str) -> str:
+        code = comment_remover(code)
+        return code
 
     def clean_code(self, code: str) -> str:
         code = code.replace(self.prompt_used["begin"], "").strip()
