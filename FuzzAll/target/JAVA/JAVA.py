@@ -16,36 +16,30 @@ class JAVATarget(Target):
         # TODO
         raise NotImplementedError
 
-    def generate(self, **kwargs) -> Union[List[str], bool]:
-        try:
-            fos = self.generate_model()
-        except RuntimeError:
-            # catch cuda out of memory error.
-            self.m_logger.logo("cuda out of memory...", level=LEVEL.INFO)
-            del self.model
-            torch.cuda.empty_cache()
-            return False
-        new_fos = []
-        for fo in fos:
-            self.g_logger.logo("========== sample =========", level=LEVEL.VERBOSE)
-            new_fos.append(self.prompt_used["begin"] + "\n" + fo)
-            self.g_logger.logo(
-                self.prompt_used["begin"] + "\n" + fo, level=LEVEL.VERBOSE
-            )
-            self.g_logger.logo("========== sample =========", level=LEVEL.VERBOSE)
-        return new_fos
-
-    def clean_code(self, code: str) -> str:
-        code = comment_remover(code)
-        code = "\n".join([line for line in code.split("\n") if line.strip() != ""])
-        return code
-
     def write_back_file(self, code, write_back_name):
         try:
             with open(write_back_name, "w", encoding="utf-8") as f:
                 f.write(code)
         except:
             pass
+
+    def wrap_prompt(self, prompt: str) -> str:
+        raise NotImplementedError
+
+    def wrap_in_comment(self, prompt: str) -> str:
+        return f"/* {prompt} */"
+
+    def filter(self, code: str) -> bool:
+        raise NotImplementedError
+
+    def clean(self, code: str) -> str:
+        code = comment_remover(code)
+        return code
+
+    def clean_code(self, code: str) -> str:
+        code = comment_remover(code)
+        code = "\n".join([line for line in code.split("\n") if line.strip() != ""])
+        return code
 
     # If there exists a public class, ensure file name matches
     def determine_file_name(self, code):
