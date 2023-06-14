@@ -1,10 +1,11 @@
 import argparse
 import glob
-import re
 import subprocess
 import time
 
 from rich.traceback import install
+
+from FuzzAll.util.util import natural_sort_key
 
 install()
 CURRENT_TIME = time.time()
@@ -16,13 +17,6 @@ from rich.progress import (
     TextColumn,
     TimeElapsedColumn,
 )
-
-
-def natural_sort_key(s):
-    _nsre = re.compile("([0-9]+)")
-    return [
-        int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)
-    ]
 
 
 def run_compile(compiler: str, source: str, pre_flags: str, post_flags: str):

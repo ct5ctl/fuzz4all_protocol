@@ -2,7 +2,7 @@ import re
 
 
 def comment_remover(text, lang="cpp"):
-    if lang == "cpp" or lang == "go":
+    if lang == "cpp" or lang == "go" or lang == "java":
 
         def replacer(match):
             s = match.group(0)
@@ -45,3 +45,10 @@ def create_chatgpt_docstring_template(
         messages.append({"role": "assistant", "content": "```\n{}\n```".format(first)})
     messages.append({"role": "user", "content": user_message})
     return messages
+
+
+def natural_sort_key(s):
+    _nsre = re.compile("([0-9]+)")
+    return [
+        int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)
+    ]
