@@ -48,31 +48,10 @@ class CPPTarget(Target):
             with open(
                 "/tmp/temp{}.cpp".format(self.CURRENT_TIME), "w", encoding="utf-8"
             ) as f:
-                f.write(code + main_code)
+                f.write(code)
         except:
             pass
-
-    def validate_prompt(self, prompt: str):
-        fos = self.model.generate(
-            prompt,
-            batch_size=self.batch_size,
-            temperature=self.temperature,
-            max_length=1024,
-        )
-        unique_set = set()
-        score = 0
-        for fo in fos:
-            code = self.prompt_used["begin"] + "\n" + fo
-            self.write_back_file(code)
-            result, _ = self.validate_individual(f"/tmp/temp{self.CURRENT_TIME}.cpp")
-            if (
-                result == FResult.SAFE
-                and self.filter(code)
-                and self.clean_code(code) not in unique_set
-            ):
-                unique_set.add(self.clean_code(code))
-                score += 1
-        return score
+        return "/tmp/temp{}.cpp".format(self.CURRENT_TIME)
 
     def wrap_prompt(self, prompt: str) -> str:
         return f"/* {prompt} */\n{self.prompt_used['separator']}\n{self.prompt_used['begin']}"
@@ -136,7 +115,7 @@ class CPPTarget(Target):
                         code = f.read()
                 except:
                     pass
-                self.write_back_file(code)
+                self.write_back_file(code + main_code)
                 exit_code = subprocess.run(
                     f"{compiler} -std=c++23 -x c++ /tmp/temp{self.CURRENT_TIME}.cpp -o /tmp/out{self.CURRENT_TIME}",
                     shell=True,

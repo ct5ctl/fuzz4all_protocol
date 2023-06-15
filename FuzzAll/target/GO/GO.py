@@ -57,6 +57,7 @@ class GOTarget(Target):
                 f.write(code)
         except:
             pass
+        return "/tmp/temp{}.go".format(self.CURRENT_TIME)
 
     def validate_individual(self, filename) -> (FResult, str):
         try:

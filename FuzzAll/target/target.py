@@ -75,9 +75,31 @@ class Target(object):
         # however such check might be beneficial.
         return True
 
-    # each target defines their way of validating prompts
-    def validate_prompt(self, prompt: str):
+    def write_back_file(self, code: str):
         raise NotImplementedError
+
+    # each target defines their way of validating prompts (can overwrite)
+    def validate_prompt(self, prompt: str):
+        fos = self.model.generate(
+            prompt,
+            batch_size=self.batch_size,
+            temperature=self.temperature,
+            max_length=1024,
+        )
+        unique_set = set()
+        score = 0
+        for fo in fos:
+            code = self.prompt_used["begin"] + "\n" + fo
+            wb_file = self.write_back_file(code)
+            result, _ = self.validate_individual(wb_file)
+            if (
+                result == FResult.SAFE
+                and self.filter(code)
+                and self.clean_code(code) not in unique_set
+            ):
+                unique_set.add(self.clean_code(code))
+                score += 1
+        return score
 
     # each target defines their way of validating prompts
     # for example we might want to encode the prompt as a docstring comment to facilitate better generation using

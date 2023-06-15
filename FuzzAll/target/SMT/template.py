@@ -63,6 +63,22 @@ CRASH_SMT_TEMPLATE = {
 }
 
 smt2_lia = {
+    "hw_prompt": """
+    (logic LIA
+ :theories (Ints)
+ :language
+ "Closed formulas built over an arbitrary expansion of the
+  Ints signature with free constant symbols, but whose terms of sort Int
+  are all linear, that is, have no occurrences of the function symbols
+  *, /, div, mod, and abs, except as specified the :extensions attribute.
+ "
+ :extensions
+ "Terms with _concrete_ coefficients are also allowed, that is, terms
+  of the form c, (* c x), or (* x c)  where x is a free constant and
+  c is a term of the form n or (- n) for some numeral n.
+ "
+)
+    """,
     "docstring": """
     (logic LIA
 
@@ -94,6 +110,27 @@ smt2_lia = {
 }
 
 smt2_auflia = {
+    "hw_prompt": """
+(logic AUFLIA
+ :theories (Ints ArraysEx)
+
+ :language
+ "Closed formulas built over arbitrary expansions of the Ints and ArraysEx
+  signatures with free sort and function symbols, but with the following
+  restrictions:
+  - all terms of sort Int are linear, that is, have no occurrences of the
+    function symbols *, /, div, mod, and abs, except as specified in the
+    :extensions attributes;
+  - all array terms have sort (Array Int Int).
+ "
+
+ :extensions
+ "As in the logic QF_AUFLIA."
+
+:notes
+ "This logic properly extends the logic QF_AUFLIA by allowing quantifiers."
+)
+    """,
     "docstring": """
 (logic AUFLIA
 
@@ -128,4 +165,73 @@ smt2_auflia = {
     """,
     "separator": "; Please create a short program which uses complex AUFLIA logic for an SMT solver",
     "begin": "(set-logic AUFLIA)",
+}
+
+smt2_lra = {
+    "hw_prompt": """
+(logic LRA
+ :theories (Reals)
+
+ :language
+ "Closed formulas built over arbitrary expansions of the Reals signature
+  with free constant symbols, but containing only linear atoms, that is,
+  atoms with no occurrences of the function symbols * and /, except as
+  specified the :extensions attribute.
+ "
+
+ :extensions
+ "Terms with _concrete_ coefficients are also allowed, that is, terms
+  of the form c, (* c x), or (* x c)  where x is a free constant and
+  c is an integer or rational coefficient.
+  - An integer coefficient is a term of the form m or (- m) for some
+    numeral m.
+  - A rational coefficient is a term of the form d, (- d) or (/ c n)
+    for some decimal d, integer coefficient c and numeral n other than 0.
+ "
+
+:notes
+ "This logic properly extends the logic QF_LRA by allowing quantifiers."
+)
+    """,
+    "docstring": """
+(logic LRA
+
+ :smt-lib-version 2.6
+ :smt-lib-release "2017-11-24"
+ :written-by "Cesare Tinelli"
+ :date "2010-05-11"
+ :last-updated "2015-04-25"
+ :update-history
+ "Note: history only accounts for content changes, not release changes.
+  2015-04-25 Updated to Version 2.5.
+  2011-06-03 Replaced ''(* c x), or (* x c)'' with ''c, (* c x), or (* x c)''
+             in :extensions.
+             (The missing case was had been left out unintentionally.)
+ "
+
+ :theories (Reals)
+
+ :language
+ "Closed formulas built over arbitrary expansions of the Reals signature
+  with free constant symbols, but containing only linear atoms, that is,
+  atoms with no occurrences of the function symbols * and /, except as
+  specified the :extensions attribute.
+ "
+
+ :extensions
+ "Terms with _concrete_ coefficients are also allowed, that is, terms
+  of the form c, (* c x), or (* x c)  where x is a free constant and
+  c is an integer or rational coefficient.
+  - An integer coefficient is a term of the form m or (- m) for some
+    numeral m.
+  - A rational coefficient is a term of the form d, (- d) or (/ c n)
+    for some decimal d, integer coefficient c and numeral n other than 0.
+ "
+
+:notes
+ "This logic properly extends the logic QF_LRA by allowing quantifiers."
+)
+    """,
+    "separator": "; Please create a short program which uses complex LRA logic for an SMT solver",
+    "begin": "(set-logic LRA)",
 }

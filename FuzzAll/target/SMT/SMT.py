@@ -4,7 +4,7 @@ from typing import List, Union
 
 import torch
 
-from FuzzAll.target.SMT.template import smt2_auflia, smt2_lia
+from FuzzAll.target.SMT.template import smt2_auflia, smt2_lia, smt2_lra
 from FuzzAll.target.target import FResult, Target
 from FuzzAll.util.Logger import LEVEL
 from FuzzAll.util.util import comment_remover
@@ -59,6 +59,8 @@ class SMTTarget(Target):
             self.prompt_used = smt2_lia
         elif kwargs["template"] == "smt2_auflia":
             self.prompt_used = smt2_auflia
+        elif kwargs["template"] == "smt2_lra":
+            self.prompt_used = smt2_lra
         else:
             raise NotImplementedError
 
@@ -70,10 +72,7 @@ class SMTTarget(Target):
                 f.write(code)
         except:
             pass
-
-    def validate_prompt(self, prompt: str):
-        # TODO
-        return 0
+        return "/tmp/temp{}.smt2".format(self.CURRENT_TIME)
 
     def wrap_prompt(self, prompt: str) -> str:
         return (

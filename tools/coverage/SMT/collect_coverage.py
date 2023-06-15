@@ -87,12 +87,34 @@ def coverage_loop(args):
         files.sort(key=natural_sort_key)
         index = 0
         for file in p.track(files):
-            run_smt(args.smt, file, "-m -i -q --check-models --lang smt2", "")
+            if args.logic != "":
+                with open(file, "r") as f:
+                    content = f.read()
+                content = f"(set-logic {args.logic})\n" + content
+                with open("/tmp/tmp_run.smt2", "w") as f:
+                    f.write(content)
+                run_smt(
+                    args.smt,
+                    "/tmp/tmp_run.smt2",
+                    "-m -i -q --check-models --lang smt2",
+                    "",
+                )
+            else:
+                run_smt(args.smt, file, "-m -i -q --check-models --lang smt2", "")
             if (index + 1) % int(args.interval) == 0:
                 line_cov, func_cov = get_coverage(args)
                 with open(args.folder + "/coverage.csv", "a") as f:
                     f.write(f"{index + 1},{line_cov},{func_cov}\n")
             index += 1
+
+
+def get_seed_coverage(args):
+    clean_coverage(args)
+    for filename in glob.glob(f"{args.folder}/**/*.smt2", recursive=True):
+        print(filename)
+        run_smt(args.smt, filename, "-m -i -q --check-models --lang smt2", "")
+
+    line_cov, func_cov = get_coverage(args)
 
 
 def main():
@@ -101,9 +123,11 @@ def main():
     parser.add_argument("--smt_folder", type=str, required=True)
     parser.add_argument("--folder", type=str, required=True)
     parser.add_argument("--interval", type=str, required=True)
+    parser.add_argument("--logic", type=str, default="")
     args = parser.parse_args()
 
     coverage_loop(args)
+    # get_seed_coverage(args)
 
 
 if __name__ == "__main__":
