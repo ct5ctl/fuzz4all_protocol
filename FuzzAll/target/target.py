@@ -52,6 +52,7 @@ class Target(object):
         )
         # prompt based variables
         self.hw = kwargs["use_kw"]
+        self.no_input_prompt = kwargs["no_input_prompt"]
         self.prompt_used = None
         self.prompt = None
         self.initial_prompt = None
@@ -124,7 +125,12 @@ class Target(object):
             self.m_logger.logo("Use existing prompt ... ", level=LEVEL.INFO)
             with open(self.folder + "/prompts/best_prompt.txt", "r") as f:
                 return f.read()
-        if kwargs["hw"]:
+        if kwargs["no_input_prompt"]:
+            self.m_logger.logo("Without any input prompt ... ", level=LEVEL.INFO)
+            best_prompt = (
+                f"{self.prompt_used['separator']}\n{self.prompt_used['begin']}"
+            )
+        elif kwargs["hw"]:
             self.m_logger.logo("Use handwritten prompt ... ", level=LEVEL.INFO)
             best_prompt = self.wrap_prompt(kwargs["hw_prompt"])
         else:
@@ -194,6 +200,7 @@ class Target(object):
             message=self.prompt_used["docstring"],
             hw_prompt=self.prompt_used["hw_prompt"] if self.hw else None,
             hw=self.hw,
+            no_input_prompt=self.no_input_prompt,
         )
         self.prompt = self.initial_prompt
         self.m_logger.logo("Done", level=LEVEL.INFO)
