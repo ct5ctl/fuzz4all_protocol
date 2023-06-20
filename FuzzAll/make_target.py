@@ -24,6 +24,7 @@ def make_target(args, parser):
         help="temperature to query the LLM model when generating output.",
     )
     parser.add_argument("--use_hw", action="store_true")
+    parser.add_argument("--no_input_prompt", action="store_true")
     parser.add_argument(
         "--prompt_strategy",
         type=int,
@@ -45,6 +46,7 @@ def make_target(args, parser):
             bs=args.bs,
             temperature=args.temperature,
             use_kw=args.use_hw,
+            no_input_prompt=args.no_input_prompt,
             prompt_strategy=args.prompt_strategy,
             level=args.level,
         )
@@ -56,6 +58,7 @@ def make_target(args, parser):
             bs=args.bs,
             temperature=args.temperature,
             use_kw=args.use_hw,
+            no_input_prompt=args.no_input_prompt,
             prompt_strategy=args.prompt_strategy,
             level=args.level,
         )
@@ -67,6 +70,7 @@ def make_target(args, parser):
             bs=args.bs,
             temperature=args.temperature,
             use_kw=args.use_hw,
+            no_input_prompt=args.no_input_prompt,
             prompt_strategy=args.prompt_strategy,
             level=args.level,
         )
@@ -78,6 +82,7 @@ def make_target(args, parser):
             bs=args.bs,
             temperature=args.temperature,
             use_kw=args.use_hw,
+            no_input_prompt=args.no_input_prompt,
             prompt_strategy=args.prompt_strategy,
             level=args.level,
         )
@@ -89,6 +94,7 @@ def make_target(args, parser):
             bs=args.bs,
             temperature=args.temperature,
             use_kw=args.use_hw,
+            no_input_prompt=args.no_input_prompt,
             prompt_strategy=args.prompt_strategy,
             level=args.level,
         )
