@@ -1,6 +1,7 @@
 from FuzzAll.target.CPP.CPP import CPPTarget
 from FuzzAll.target.GO.GO import GOTarget
 from FuzzAll.target.JAVA.JAVA import JAVATarget
+from FuzzAll.target.QISKIT.QISKIT import QiskitTarget
 from FuzzAll.target.SMT.SMT import SMTTarget
 
 
@@ -39,6 +40,17 @@ def make_target(args, parser):
     if args.language == "cpp":  # GCC
         return args, CPPTarget(
             language="cpp",
+            folder=args.folder,
+            template=args.template,
+            bs=args.bs,
+            temperature=args.temperature,
+            use_kw=args.use_hw,
+            prompt_strategy=args.prompt_strategy,
+            level=args.level,
+        )
+    elif args.language == "qiskit":  # Qiskit
+        return args, QiskitTarget(
+            language="qiskit",
             folder=args.folder,
             template=args.template,
             bs=args.bs,
