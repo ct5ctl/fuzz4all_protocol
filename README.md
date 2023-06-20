@@ -19,5 +19,8 @@
     pip install -e .
     ```
 
+Note: to save the conda environment, run `conda env export > environment.yml` and to load it, run `conda env create -f environment.yml`.
+
+
 ### Little things to implement
 - setup chroot jail, at least have some scripts that can set it up
