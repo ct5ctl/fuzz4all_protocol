@@ -20,6 +20,7 @@ from transformers import (
 dotenv_path = Path("../.env")
 load_dotenv(dotenv_path=dotenv_path)
 AUTH_TOKEN = os.environ.get("HUGGING_FACE_HUB_TOKEN", None)
+EXEC_MODE = os.environ.get("FUZZ_EXEC_MODE", "cuda")
 
 # OPTION 2 - SPECIFIC MODEL FOLDER SETUP
 # os.environ["HF_HOME"] = os.environ.get("HF_HOME", "/JawTitan/huggingface/")
@@ -69,7 +70,9 @@ class EndOfFunctionCriteria(StoppingCriteria):
 
 
 class StarCoder:
-    def __init__(self, device="cuda", eos: List = None, max_length=3000) -> None:
+    def __init__(
+        self, device: str = EXEC_MODE, eos: List = None, max_length=3000
+    ) -> None:
         # checkpoint = "bigcode/starcoderbase"
         # the smaller model is easier for debugging
         checkpoint = "bigcode/tiny_starcoder_py"
@@ -141,7 +144,9 @@ class StarCoder:
 
 
 class CodeGen2:
-    def __init__(self, device="cuda", eos: List = None, max_length=3000) -> None:
+    def __init__(
+        self, device: str = EXEC_MODE, eos: List = None, max_length=3000
+    ) -> None:
         checkpoint = "Salesforce/codegen2-7B"
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained(
