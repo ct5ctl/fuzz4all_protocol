@@ -1,3 +1,4 @@
+import re
 import subprocess
 import time
 from typing import List, Union
@@ -22,6 +23,45 @@ int main(){
 return 0;
 }
 """
+
+
+def get_gcc_supported_standard() -> List[str]:
+    """Returns the list of all the GCC standards supported by the system.
+
+    This replicates the equivalent bash command:
+    gcc -v --help 2> /dev/null | sed -n '/^ *-std=\([^<][^ ]\+\).*/ {s//\1/p}'
+    """
+    gcc_help = subprocess.run(
+        "gcc -v --help 2> /dev/null", shell=True, capture_output=True
+    )
+    gcc_help = gcc_help.stdout.decode("utf-8")
+    gcc_help = gcc_help.split("\n")
+    gcc_help = [line.strip() for line in gcc_help]
+    gcc_help = [line for line in gcc_help if line.startswith("-std=")]
+    gcc_help = [line.split("=")[1] for line in gcc_help]
+    gcc_help = [line.split(" ")[0] for line in gcc_help]
+    supported_versions = gcc_help
+    return supported_versions
+
+
+def get_most_recent_cpp_version() -> str:
+    """Returns the most recent C++ standard supported by the system."""
+    all_versions = get_gcc_supported_standard()
+    # keep those with c++<number> only and return the one with the highest
+    # number
+    all_versions = [ver for ver in all_versions if re.match(r"^c\+\+\d+$", ver)]
+    cpp_versions = [ver.replace("c++", "") for ver in all_versions]
+    # add the prefix to each number, either 19 or 20 depending on the number
+    # if the number is greater or equal than 89 (1989) then it is 19, else 20
+    cpp_versions = [
+        f"19{ver}" if int(ver) >= 89 else f"20{ver}" for ver in cpp_versions
+    ]
+    cpp_versions = sorted(cpp_versions)
+    most_recent_cpp_version = cpp_versions[-1][-2:]
+    return f"c++{most_recent_cpp_version}"
+
+
+MOST_RECENT_GCC_STD_VERSION = get_most_recent_cpp_version()
 
 
 class CPPTarget(Target):
@@ -85,7 +125,7 @@ class CPPTarget(Target):
         # check without -c option (+ linking)
         try:
             exit_code = subprocess.run(
-                f"{compiler} -x c++ -std=c++23 {filename} -o /tmp/out{self.CURRENT_TIME}",
+                f"{compiler} -x c++ -std={MOST_RECENT_GCC_STD_VERSION} {filename} -o /tmp/out{self.CURRENT_TIME}",
                 shell=True,
                 capture_output=True,
                 encoding="utf-8",
@@ -117,7 +157,7 @@ class CPPTarget(Target):
                     pass
                 self.write_back_file(code + main_code)
                 exit_code = subprocess.run(
-                    f"{compiler} -std=c++23 -x c++ /tmp/temp{self.CURRENT_TIME}.cpp -o /tmp/out{self.CURRENT_TIME}",
+                    f"{compiler} -std={MOST_RECENT_GCC_STD_VERSION} -x c++ /tmp/temp{self.CURRENT_TIME}.cpp -o /tmp/out{self.CURRENT_TIME}",
                     shell=True,
                     capture_output=True,
                     encoding="utf-8",
@@ -152,8 +192,9 @@ class CPPTarget(Target):
             f.write(code)
         try:
             exit_code = subprocess.run(
-                "g++ -std=c++23 -c -fsyntax-only {}".format(
-                    "/tmp/temp{}.cpp".format(self.CURRENT_TIME)
+                "g++ -std={} -c -fsyntax-only {}".format(
+                    MOST_RECENT_GCC_STD_VERSION,
+                    "/tmp/temp{}.cpp".format(self.CURRENT_TIME),
                 ),
                 shell=True,
                 capture_output=True,
