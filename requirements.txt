@@ -4,3 +4,4 @@ openai
 tiktoken
 torch
 transformers
+python-dotenv
