@@ -1,7 +1,9 @@
 import os
+from pathlib import Path
 from typing import List
 
 import torch
+from dotenv import load_dotenv
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -9,11 +11,21 @@ from transformers import (
     StoppingCriteriaList,
 )
 
-os.environ["HF_HOME"] = os.environ.get("HF_HOME", "/JawTitan/huggingface/")
+# OPTION 1 - TRADITIONAL SETUP
+# note that for using StarCoder, you need to accept the license agreement from
+# the hugging face website.
+# the .env file contains:
+# HUGGING_FACE_HUB_TOKEN=your-token-here
+
+dotenv_path = Path("../.env")
+load_dotenv(dotenv_path=dotenv_path)
+AUTH_TOKEN = os.environ.get("HUGGING_FACE_HUB_TOKEN", None)
+
+# OPTION 2 - SPECIFIC MODEL FOLDER SETUP
+# os.environ["HF_HOME"] = os.environ.get("HF_HOME", "/JawTitan/huggingface/")
+# HF_CACHE_DIR = "/JawTitan/huggingface/hub"
+
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # disable warning
-
-HF_CACHE_DIR = "/JawTitan/huggingface/hub"
-
 EOF_STRINGS = ["<|endoftext|>", "###"]
 
 
@@ -58,13 +70,21 @@ class EndOfFunctionCriteria(StoppingCriteria):
 
 class StarCoder:
     def __init__(self, device="cuda", eos: List = None, max_length=3000) -> None:
-        checkpoint = "bigcode/starcoderbase"
+        # checkpoint = "bigcode/starcoderbase"
+        # the smaller model is easier for debugging
+        checkpoint = "bigcode/tiny_starcoder_py"
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained(
-            checkpoint, cache_dir=HF_CACHE_DIR
+            checkpoint,
+            use_auth_token=AUTH_TOKEN,  # OPTION 1
+            # cache_dir=HF_CACHE_DIR  # OPTION 2
         )
         self.model = (
-            AutoModelForCausalLM.from_pretrained(checkpoint, cache_dir=HF_CACHE_DIR)
+            AutoModelForCausalLM.from_pretrained(
+                checkpoint,
+                use_auth_token=AUTH_TOKEN,  # OPTION 1
+                # cache_dir=HF_CACHE_DIR  # OPTION 2
+            )
             .to(torch.bfloat16)
             .to(device)
         )
