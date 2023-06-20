@@ -1,3 +1,4 @@
+import os
 import re
 import subprocess
 from multiprocessing import Process
@@ -134,6 +135,12 @@ class QiskitTarget(Target):
             content = "\n".join(lines)
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(content)
+        program_content = content
+
+        # fake execution
+        self.v_logger.logo(f"python {filename}:")
+        self.v_logger.logo("\n" + program_content)
+        self.v_logger.logo("-" * 20)
 
         # check if it can be parsed
         parser_result, parser_msg = self._validate_static(filename)
@@ -153,6 +160,7 @@ class QiskitTarget(Target):
             exit_codes[opt_level] = None
             # store the program in a temporary file
             new_filename = f"/tmp/temp{self.CURRENT_TIME}_lvl_{opt_level}.py"
+            only_new_filename = os.path.basename(new_filename)
             i_content = program_content
             i_content += "\nfrom qiskit.compiler import transpile"
             i_content += f"\nqc = transpile(qc, optimization_level={opt_level})"
@@ -160,13 +168,10 @@ class QiskitTarget(Target):
                 f.write(i_content)
                 f.close()
             try:
-                # fake execution
-                print(f"python {new_filename}")
-                print("-" * 20)
-                print(i_content)
-                print("-" * 20)
-                cmd = f"echo {new_filename}"
+                # cmd = f"echo {new_filename}"
                 # cmd = f"python {new_filename}"
+                # docker run -v {new_filename}:/{only_new_filename} qiskit-driver {only_new_filename}
+                cmd = f"docker run -v {new_filename}:/{only_new_filename} qiskit-driver {only_new_filename}"
                 exit_code = subprocess.run(
                     cmd,
                     shell=True,
@@ -176,6 +181,7 @@ class QiskitTarget(Target):
                     text=True,
                 )
                 exit_codes[opt_level] = exit_code
+                self.v_logger.logo(f"Execution result: {exit_code}")
             except ValueError as e:
                 self._kill_program(filename)
                 return FResult.ERROR, f"ValueError: {str(e)}"
