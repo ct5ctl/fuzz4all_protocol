@@ -1,4 +1,5 @@
 import os
+from enum import IntEnum
 from pathlib import Path
 from typing import List
 
@@ -11,20 +12,30 @@ from transformers import (
     StoppingCriteriaList,
 )
 
-# OPTION 1 - TRADITIONAL SETUP
-# note that for using StarCoder, you need to accept the license agreement from
-# the hugging face website.
-# the .env file contains:
-# HUGGING_FACE_HUB_TOKEN=your-token-here
+
+class CACHESETUP(IntEnum):
+    MODEL_CACHED_LOCALLY = 1
+    MODEL_FROM_HUGGINGFACE = 2
+
+
+SELECTED_OPTION = CACHESETUP.MODEL_FROM_HUGGINGFACE
 
 dotenv_path = Path("../.env")
 load_dotenv(dotenv_path=dotenv_path)
-AUTH_TOKEN = os.environ.get("HUGGING_FACE_HUB_TOKEN", None)
-EXEC_MODE = os.environ.get("FUZZ_EXEC_MODE", "cuda")
 
-# OPTION 2 - SPECIFIC MODEL FOLDER SETUP
-# os.environ["HF_HOME"] = os.environ.get("HF_HOME", "/JawTitan/huggingface/")
-# HF_CACHE_DIR = "/JawTitan/huggingface/hub"
+
+EXEC_MODE = os.environ.get("FUZZ_EXEC_MODE", "cuda")
+MODEL_NAME = os.environ.get("FUZZ_MODEL_NAME", "bigcode/tiny_starcoder_py")
+
+kwargs_for_hf_resoruces = {}
+
+if SELECTED_OPTION == CACHESETUP.MODEL_FROM_HUGGINGFACE:
+    AUTH_TOKEN = os.environ.get("HUGGING_FACE_HUB_TOKEN", None)
+    kwargs_for_hf_resoruces["use_auth_token"] = AUTH_TOKEN
+elif SELECTED_OPTION == CACHESETUP.MODEL_CACHED_LOCALLY:
+    os.environ["HF_HOME"] = os.environ.get("HF_HOME", "/JawTitan/huggingface/")
+    HF_CACHE_DIR = os.environ.get("HF_CACHE_DIR", "/JawTitan/huggingface/hub")
+    kwargs_for_hf_resoruces["cache_dir"] = HF_CACHE_DIR
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # disable warning
 EOF_STRINGS = ["<|endoftext|>", "###"]
@@ -73,20 +84,16 @@ class StarCoder:
     def __init__(
         self, device: str = EXEC_MODE, eos: List = None, max_length=3000
     ) -> None:
-        # checkpoint = "bigcode/starcoderbase"
-        # the smaller model is easier for debugging
-        checkpoint = "bigcode/tiny_starcoder_py"
+        checkpoint = MODEL_NAME
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained(
             checkpoint,
-            use_auth_token=AUTH_TOKEN,  # OPTION 1
-            # cache_dir=HF_CACHE_DIR  # OPTION 2
+            **kwargs_for_hf_resoruces,
         )
         self.model = (
             AutoModelForCausalLM.from_pretrained(
                 checkpoint,
-                use_auth_token=AUTH_TOKEN,  # OPTION 1
-                # cache_dir=HF_CACHE_DIR  # OPTION 2
+                **kwargs_for_hf_resoruces,
             )
             .to(torch.bfloat16)
             .to(device)
@@ -147,18 +154,16 @@ class CodeGen2:
     def __init__(
         self, device: str = EXEC_MODE, eos: List = None, max_length=3000
     ) -> None:
-        checkpoint = "Salesforce/codegen2-7B"
+        checkpoint = MODEL_NAME
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained(
             checkpoint,
-            use_auth_token=AUTH_TOKEN,
-            # cache_dir=HF_CACHE_DIR
+            **kwargs_for_hf_resoruces,
         )
         self.model = (
             AutoModelForCausalLM.from_pretrained(
                 checkpoint,
-                use_auth_token=AUTH_TOKEN,
-                # cache_dir=HF_CACHE_DIR
+                **kwargs_for_hf_resoruces,
             )
             .to(torch.bfloat16)
             .to(device)
@@ -218,5 +223,9 @@ class CodeGen2:
 
 
 def make_model(eos: List = None):
+    if "starcoder" in MODEL_NAME.lower():
+        return StarCoder(eos=eos)
+    elif "codegen2" in MODEL_NAME.lower():
+        return CodeGen2(eos=eos)
     return StarCoder(eos=eos)
     # return CodeGen2(eos=eos)
