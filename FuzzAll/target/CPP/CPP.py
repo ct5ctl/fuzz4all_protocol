@@ -6,6 +6,7 @@ import torch
 
 # TODO: fix template to within their own folder, kinda of like a dump folder for user
 from FuzzAll.target.CPP.template import (
+    cpp_23,
     cpp_apply,
     cpp_expected,
     cpp_is_scoped_enum,
@@ -40,6 +41,8 @@ class CPPTarget(Target):
             self.prompt_used = cpp_expected
         elif kwargs["template"] == "cpp_apply":
             self.prompt_used = cpp_apply
+        elif kwargs["template"] == "cpp_23":
+            self.prompt_used = cpp_23
         else:
             raise NotImplementedError
 

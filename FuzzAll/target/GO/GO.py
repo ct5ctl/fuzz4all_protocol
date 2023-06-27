@@ -4,7 +4,7 @@ from typing import List, Union
 
 import torch
 
-from FuzzAll.target.GO.template import go_atomic, go_heap
+from FuzzAll.target.GO.template import go_atomic, go_big_math, go_heap, go_reflect
 from FuzzAll.target.target import FResult, Target
 from FuzzAll.util.Logger import LEVEL
 from FuzzAll.util.util import comment_remover
@@ -17,6 +17,10 @@ class GOTarget(Target):
             self.prompt_used = go_atomic
         elif kwargs["template"] == "go_heap":
             self.prompt_used = go_heap
+        elif kwargs["template"] == "go_big_math":
+            self.prompt_used = go_big_math
+        elif kwargs["template"] == "go_reflect":
+            self.prompt_used = go_reflect
         else:
             raise NotImplementedError
 
@@ -90,6 +94,8 @@ class GOTarget(Target):
                 shell=True,
             )  # kill all tests thank you
             return FResult.TIMED_OUT, "go"
+        except UnicodeDecodeError as ue:
+            return FResult.FAILURE, "decoding error"
         if exit_code.returncode == 1:
             return FResult.FAILURE, exit_code.stderr
         elif exit_code.returncode == 0:

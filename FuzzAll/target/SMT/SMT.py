@@ -92,7 +92,7 @@ class SMTTarget(Target):
         # clean_code = "\n".join(
         #     [x for x in code.splitlines() if not x.startswith("(set-logic")]
         # )
-        clean_code = code
+        clean_code = comment_remover(code, lang="smt2")
         clean_code = "\n".join(
             [x for x in clean_code.splitlines() if not x.startswith("(set-option :")]
         )
@@ -103,11 +103,11 @@ class SMTTarget(Target):
 
     # remove any comments, or blank lines
     def clean_code(self, code: str) -> str:
-        # TODO remove comments
+        clean_code = comment_remover(code, lang="smt2")
         code = "\n".join(
             [
                 line
-                for line in code.split("\n")
+                for line in clean_code.split("\n")
                 if line.strip() != "" and line.strip() != self.prompt_used["begin"]
             ]
         )
