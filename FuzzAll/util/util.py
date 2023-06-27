@@ -16,6 +16,8 @@ def comment_remover(text, lang="cpp"):
             re.DOTALL | re.MULTILINE,
         )
         return re.sub(pattern, replacer, text)
+    elif lang == "smt2":
+        return re.sub(r";.*", "", text)
     else:
         # TODO (Add other lang support): temp, only facilitate basic c/cpp syntax
         raise NotImplementedError("Only cpp supported for now")
