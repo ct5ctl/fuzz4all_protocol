@@ -74,6 +74,7 @@ class StarCoder:
         self.suffix_token = "<fim_suffix><fim_middle>"
         self.skip_special_tokens = False
 
+    @torch.inference_mode()
     def generate(
         self, prompt, batch_size=10, temperature=1.0, max_length=512
     ) -> List[str]:
