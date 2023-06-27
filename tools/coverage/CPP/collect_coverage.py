@@ -1,5 +1,6 @@
 import argparse
 import glob
+import os
 import subprocess
 import time
 
@@ -80,6 +81,28 @@ def clean_coverage(args):
     )
 
 
+def save_coverage(args):
+    # create folder for coverage
+    if os.path.exists(args.folder + "/prev_coverage"):
+        subprocess.run(
+            f"cd {args.folder}; rm -rf prev_coverage",
+            shell=True,
+            encoding="utf-8",
+        )
+    os.makedirs(args.folder + "/prev_coverage", exist_ok=True)
+    # copy coverage folder to fuzzing folder
+    subprocess.run(
+        "cd "
+        + args.cov_folder
+        + '; find -type f -name "*.gcda" -exec cp --parent {} '
+        + args.folder
+        + "/prev_coverage \;",
+        shell=True,
+        encoding="utf-8",
+    )
+    print("Coverage saved")
+
+
 def coverage_loop(args):
     with Progress(
         TextColumn("Fuzzing • [progress.percentage]{task.percentage:>3.0f}%"),
@@ -91,11 +114,25 @@ def coverage_loop(args):
         # clean coverage
         clean_coverage(args)
 
+        if os.path.exists(args.folder + "/prev_coverage"):
+            # copy previous coverage to coverage folder
+            subprocess.run(
+                f"cp -ra {args.folder}/prev_coverage/. {args.cov_folder}/",
+                shell=True,
+                encoding="utf-8",
+            )
+
         # loop through all files in folder in alphanumeric order
         files = glob.glob(args.folder + "/*.fuzz")
         files.sort(key=natural_sort_key)
         index = 0
         for file in p.track(files):
+
+            # skip until start
+            if index + 1 < args.start:
+                index += 1
+                continue
+
             # compile the file
             run_compile(
                 args.compiler,
@@ -112,7 +149,7 @@ def coverage_loop(args):
                         f"-x c++ -std=c++23 {o} {args.e_include}",
                         f"-o /tmp/out{CURRENT_TIME}",
                     )
-            if (index + 1) % args.interval == 0:
+            if (index + 1) % args.interval == 0 and index + 1 >= args.start:
                 # get the coverage
                 line_cov, func_cov = get_coverage(args)
                 # append to csv file
@@ -123,7 +160,11 @@ def coverage_loop(args):
                     with open(args.folder + "/coverage.csv", "a") as f:
                         f.write(f"{index + 1},{line_cov},{func_cov}\n")
 
+            if index + 1 >= args.end:
+                break
             index += 1
+
+        save_coverage(args)
 
 
 def main():
@@ -131,6 +172,8 @@ def main():
     parser.add_argument("--compiler", type=str, required=True)
     parser.add_argument("--folder", type=str, required=True)
     parser.add_argument("--interval", type=int, required=True)
+    parser.add_argument("--start", type=int, default=0)
+    parser.add_argument("--end", type=int, default=1000000000)
     parser.add_argument("--cov_folder", type=str, required=True)
     parser.add_argument("--gcov", type=str, required=True)
     parser.add_argument("--e_include", type=str, default="")  # for csmith
