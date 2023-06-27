@@ -8,3 +8,5 @@ __pycache__/
 
 # fuzzing artifacts
 .z3-trace
+
+.env

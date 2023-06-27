@@ -77,12 +77,40 @@ def evaluate(args, target: Target):
 
 
 def main():
+    """Main function to start the fuzzing process.
+
+    Remember that make_target uses these arguments:
+
+    An example command to run this script on cpp:
+    ```bash
+    python fuzz.py \
+    --language cpp --num 10 --otf --level 3 \
+    --template cpp_expected \
+    --bs 1 --temperature 1.0 --prompt_strategy 0 --use_hw
+    ```
+    """
     parser = argparse.ArgumentParser()
     # basic options, individual language/target options are referenced in make_target
-    parser.add_argument("--folder", type=str, default="Results/test")
-    parser.add_argument("--language", type=str, required=True)
+    parser.add_argument(
+        "--folder", type=str, default="Results/test", help="folder to store results"
+    )
+    parser.add_argument(
+        "--language",
+        type=str,
+        required=True,
+        help="""
+            language to fuzz, currently supported: cpp, smt2, java, go
+        """,
+    )
     parser.add_argument("--num", type=int, required=True)
-    parser.add_argument("--level", type=int, required=True)
+    parser.add_argument(
+        "--level",
+        type=int,
+        required=True,
+        help="""
+            level of logging: 1 = INFO, 2 = TRACE, 3 = VERBOSE
+        """,
+    )
     parser.add_argument("--evaluate", action="store_true")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument(
