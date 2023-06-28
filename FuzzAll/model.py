@@ -18,9 +18,9 @@ class CACHESETUP(IntEnum):
     MODEL_FROM_HUGGINGFACE = 2
 
 
-SELECTED_OPTION = CACHESETUP.MODEL_FROM_HUGGINGFACE
+SELECTED_OPTION = CACHESETUP.MODEL_CACHED_LOCALLY
 
-dotenv_path = Path("../.env")
+dotenv_path = Path(__file__).parent.resolve() / "../.env"
 load_dotenv(dotenv_path=dotenv_path)
 
 
