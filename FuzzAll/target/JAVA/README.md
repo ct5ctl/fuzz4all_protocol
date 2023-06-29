@@ -25,3 +25,10 @@
 
  5. [Run basic tests](##running-tests): \
     `make run-test-tier1`
+
+### Additional Info on Building OpenJDK
+
+- There are a list of pre-requisites that need to be
+installed to build OpenJDK from source: https://github.com/openjdk/jdk/blob/master/doc/building.md#external-library-requirements
+
+- The script `install_openjdk.sh` can be used to automatically install `openjdk` on your machine after installing all pre-reqs. Note that some variables need to be changed to install on your specific machine. Use `./install_openjdk.sh <install_dir>` to install to desired directory.
