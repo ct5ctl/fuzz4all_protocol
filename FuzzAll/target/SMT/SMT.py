@@ -4,7 +4,13 @@ from typing import List, Union
 
 import torch
 
-from FuzzAll.target.SMT.template import smt2_auflia, smt2_lia, smt2_lra
+from FuzzAll.target.SMT.template import (
+    smt2_auflia,
+    smt2_lia,
+    smt2_lia_example,
+    smt2_lia_example_doc,
+    smt2_lra,
+)
 from FuzzAll.target.target import FResult, Target
 from FuzzAll.util.Logger import LEVEL
 from FuzzAll.util.util import comment_remover
@@ -57,6 +63,10 @@ class SMTTarget(Target):
         self.model = None  # to be declared
         if kwargs["template"] == "smt2_lia":
             self.prompt_used = smt2_lia
+        elif kwargs["template"] == "smt2_lia_example":
+            self.prompt_used = smt2_lia_example
+        elif kwargs["template"] == "smt2_lia_example_doc":
+            self.prompt_used = smt2_lia_example_doc
         elif kwargs["template"] == "smt2_auflia":
             self.prompt_used = smt2_auflia
         elif kwargs["template"] == "smt2_lra":

@@ -109,6 +109,88 @@ smt2_lia = {
     "begin": "(set-logic LIA)",
 }
 
+smt2_lia_example = {
+    "hw_prompt": """
+(set-logic LIA)
+(declare-const x Int)
+(declare-const y Int)
+(assert (= (- x y) (+ x (- y) 1)))
+(check-sat)
+; unsat
+(exit)""",
+    "docstring": """
+(set-logic LIA)
+(declare-const x Int)
+(declare-const y Int)
+(assert (= (- x y) (+ x (- y) 1)))
+(check-sat)
+; unsat
+(exit)""",
+    "separator": "; Please create a short program which uses complex LIA logic for an SMT solver",
+    "begin": "(set-logic LIA)",
+}
+
+smt2_lia_example_doc = {
+    "hw_prompt": """
+(logic AUFLIA
+ :theories (Ints ArraysEx)
+
+ :language
+ "Closed formulas built over arbitrary expansions of the Ints and ArraysEx
+  signatures with free sort and function symbols, but with the following
+  restrictions:
+  - all terms of sort Int are linear, that is, have no occurrences of the
+    function symbols *, /, div, mod, and abs, except as specified in the
+    :extensions attributes;
+  - all array terms have sort (Array Int Int).
+ "
+
+ :extensions
+ "As in the logic QF_AUFLIA."
+
+:notes
+ "This logic properly extends the logic QF_AUFLIA by allowing quantifiers."
+)
+
+(set-logic LIA)
+(declare-const x Int)
+(declare-const y Int)
+(assert (= (- x y) (+ x (- y) 1)))
+(check-sat)
+; unsat
+(exit)""",
+    "docstring": """
+(logic AUFLIA
+ :theories (Ints ArraysEx)
+
+ :language
+ "Closed formulas built over arbitrary expansions of the Ints and ArraysEx
+  signatures with free sort and function symbols, but with the following
+  restrictions:
+  - all terms of sort Int are linear, that is, have no occurrences of the
+    function symbols *, /, div, mod, and abs, except as specified in the
+    :extensions attributes;
+  - all array terms have sort (Array Int Int).
+ "
+
+ :extensions
+ "As in the logic QF_AUFLIA."
+
+:notes
+ "This logic properly extends the logic QF_AUFLIA by allowing quantifiers."
+)
+
+(set-logic LIA)
+(declare-const x Int)
+(declare-const y Int)
+(assert (= (- x y) (+ x (- y) 1)))
+(check-sat)
+; unsat
+(exit)""",
+    "separator": "; Please create a short program which uses complex LIA logic for an SMT solver",
+    "begin": "(set-logic LIA)",
+}
+
 smt2_auflia = {
     "hw_prompt": """
 (logic AUFLIA
