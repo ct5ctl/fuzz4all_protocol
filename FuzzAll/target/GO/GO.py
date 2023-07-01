@@ -4,7 +4,15 @@ from typing import List, Union
 
 import torch
 
-from FuzzAll.target.GO.template import go_atomic, go_big_math, go_heap, go_reflect
+from FuzzAll.target.GO.template import (
+    go_atomic,
+    go_big_math,
+    go_bytes,
+    go_heap,
+    go_maphash,
+    go_reflect,
+    go_strconv,
+)
 from FuzzAll.target.target import FResult, Target
 from FuzzAll.util.Logger import LEVEL
 from FuzzAll.util.util import comment_remover
@@ -21,6 +29,12 @@ class GOTarget(Target):
             self.prompt_used = go_big_math
         elif kwargs["template"] == "go_reflect":
             self.prompt_used = go_reflect
+        elif kwargs["template"] == "go_maphash":
+            self.prompt_used = go_maphash
+        elif kwargs["template"] == "go_strconv":
+            self.prompt_used = go_strconv
+        elif kwargs["template"] == "go_bytes":
+            self.prompt_used = go_bytes
         else:
             raise NotImplementedError
 

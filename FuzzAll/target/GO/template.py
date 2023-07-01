@@ -104,6 +104,390 @@ func (v *Value) Swap(new any) (old any)
     "begin": 'package main\nimport (\n\t"sync/atomic"\n)\n',
     "target_api": "atomic",
 }
+
+go_bytes = {
+    "docstring": """
+Overview ¶
+Package bytes implements functions for the manipulation of byte slices. It is analogous to the facilities of the strings package.
+
+Index ¶
+Constants
+Variables
+func Clone(b []byte) []byte
+func Compare(a, b []byte) int
+func Contains(b, subslice []byte) bool
+func ContainsAny(b []byte, chars string) bool
+func ContainsRune(b []byte, r rune) bool
+func Count(s, sep []byte) int
+func Cut(s, sep []byte) (before, after []byte, found bool)
+func CutPrefix(s, prefix []byte) (after []byte, found bool)
+func CutSuffix(s, suffix []byte) (before []byte, found bool)
+func Equal(a, b []byte) bool
+func EqualFold(s, t []byte) bool
+func Fields(s []byte) [][]byte
+func FieldsFunc(s []byte, f func(rune) bool) [][]byte
+func HasPrefix(s, prefix []byte) bool
+func HasSuffix(s, suffix []byte) bool
+func Index(s, sep []byte) int
+func IndexAny(s []byte, chars string) int
+func IndexByte(b []byte, c byte) int
+func IndexFunc(s []byte, f func(r rune) bool) int
+func IndexRune(s []byte, r rune) int
+func Join(s [][]byte, sep []byte) []byte
+func LastIndex(s, sep []byte) int
+func LastIndexAny(s []byte, chars string) int
+func LastIndexByte(s []byte, c byte) int
+func LastIndexFunc(s []byte, f func(r rune) bool) int
+func Map(mapping func(r rune) rune, s []byte) []byte
+func Repeat(b []byte, count int) []byte
+func Replace(s, old, new []byte, n int) []byte
+func ReplaceAll(s, old, new []byte) []byte
+func Runes(s []byte) []rune
+func Split(s, sep []byte) [][]byte
+func SplitAfter(s, sep []byte) [][]byte
+func SplitAfterN(s, sep []byte, n int) [][]byte
+func SplitN(s, sep []byte, n int) [][]byte
+func Title(s []byte) []byteDEPRECATED
+func ToLower(s []byte) []byte
+func ToLowerSpecial(c unicode.SpecialCase, s []byte) []byte
+func ToTitle(s []byte) []byte
+func ToTitleSpecial(c unicode.SpecialCase, s []byte) []byte
+func ToUpper(s []byte) []byte
+func ToUpperSpecial(c unicode.SpecialCase, s []byte) []byte
+func ToValidUTF8(s, replacement []byte) []byte
+func Trim(s []byte, cutset string) []byte
+func TrimFunc(s []byte, f func(r rune) bool) []byte
+func TrimLeft(s []byte, cutset string) []byte
+func TrimLeftFunc(s []byte, f func(r rune) bool) []byte
+func TrimPrefix(s, prefix []byte) []byte
+func TrimRight(s []byte, cutset string) []byte
+func TrimRightFunc(s []byte, f func(r rune) bool) []byte
+func TrimSpace(s []byte) []byte
+func TrimSuffix(s, suffix []byte) []byte
+type Buffer
+func NewBuffer(buf []byte) *Buffer
+func NewBufferString(s string) *Buffer
+func (b *Buffer) Bytes() []byte
+func (b *Buffer) Cap() int
+func (b *Buffer) Grow(n int)
+func (b *Buffer) Len() int
+func (b *Buffer) Next(n int) []byte
+func (b *Buffer) Read(p []byte) (n int, err error)
+func (b *Buffer) ReadByte() (byte, error)
+func (b *Buffer) ReadBytes(delim byte) (line []byte, err error)
+func (b *Buffer) ReadFrom(r io.Reader) (n int64, err error)
+func (b *Buffer) ReadRune() (r rune, size int, err error)
+func (b *Buffer) ReadString(delim byte) (line string, err error)
+func (b *Buffer) Reset()
+func (b *Buffer) String() string
+func (b *Buffer) Truncate(n int)
+func (b *Buffer) UnreadByte() error
+func (b *Buffer) UnreadRune() error
+func (b *Buffer) Write(p []byte) (n int, err error)
+func (b *Buffer) WriteByte(c byte) error
+func (b *Buffer) WriteRune(r rune) (n int, err error)
+func (b *Buffer) WriteString(s string) (n int, err error)
+func (b *Buffer) WriteTo(w io.Writer) (n int64, err error)
+type Reader
+func NewReader(b []byte) *Reader
+func (r *Reader) Len() int
+func (r *Reader) Read(b []byte) (n int, err error)
+func (r *Reader) ReadAt(b []byte, off int64) (n int, err error)
+func (r *Reader) ReadByte() (byte, error)
+func (r *Reader) ReadRune() (ch rune, size int, err error)
+func (r *Reader) Reset(b []byte)
+func (r *Reader) Seek(offset int64, whence int) (int64, error)
+func (r *Reader) Size() int64
+func (r *Reader) UnreadByte() error
+func (r *Reader) UnreadRune() error
+func (r *Reader) WriteTo(w io.Writer) (n int64, err error)
+Examples ¶
+Buffer
+Buffer (Reader)
+Buffer.Bytes
+Buffer.Cap
+Buffer.Grow
+Buffer.Len
+Buffer.Next
+Buffer.Read
+Buffer.ReadByte
+Compare
+Compare (Search)
+Contains
+ContainsAny
+ContainsRune
+Count
+Cut
+Equal
+EqualFold
+Fields
+FieldsFunc
+HasPrefix
+HasSuffix
+Index
+IndexAny
+IndexByte
+IndexFunc
+IndexRune
+Join
+LastIndex
+LastIndexAny
+LastIndexByte
+LastIndexFunc
+Reader.Len
+Repeat
+Replace
+ReplaceAll
+Runes
+Split
+SplitAfter
+SplitAfterN
+SplitN
+Title
+ToLower
+ToLowerSpecial
+ToTitle
+ToTitleSpecial
+ToUpper
+ToUpperSpecial
+Trim
+TrimFunc
+TrimLeft
+TrimLeftFunc
+TrimPrefix
+TrimRight
+TrimRightFunc
+TrimSpace
+TrimSuffix
+""",
+    "separator": "// Please create a very short program which combines bytes with other go features in a complex way",
+    "begin": 'package main\nimport (\n\t"bytes"\n',
+    "target_api": "bytes",
+}
+
+go_maphash = {
+    "docstring": """
+Overview ¶
+Package maphash provides hash functions on byte sequences. These hash functions are intended to be used to implement hash tables or other data structures that need to map arbitrary strings or byte sequences to a uniform distribution on unsigned 64-bit integers. Each different instance of a hash table or data structure should use its own Seed.
+
+The hash functions are not cryptographically secure. (See crypto/sha256 and crypto/sha512 for cryptographic use.)
+
+Example ¶
+Index ¶
+func Bytes(seed Seed, b []byte) uint64
+func String(seed Seed, s string) uint64
+type Hash
+func (h *Hash) BlockSize() int
+func (h *Hash) Reset()
+func (h *Hash) Seed() Seed
+func (h *Hash) SetSeed(seed Seed)
+func (h *Hash) Size() int
+func (h *Hash) Sum(b []byte) []byte
+func (h *Hash) Sum64() uint64
+func (h *Hash) Write(b []byte) (int, error)
+func (h *Hash) WriteByte(b byte) error
+func (h *Hash) WriteString(s string) (int, error)
+type Seed
+func MakeSeed() Seed
+Examples ¶
+Package
+Constants ¶
+This section is empty.
+
+Variables ¶
+This section is empty.
+
+Functions ¶
+func Bytes ¶
+added in go1.19
+func Bytes(seed Seed, b []byte) uint64
+Bytes returns the hash of b with the given seed.
+
+Bytes is equivalent to, but more convenient and efficient than:
+
+var h Hash
+h.SetSeed(seed)
+h.Write(b)
+return h.Sum64()
+func String ¶
+added in go1.19
+func String(seed Seed, s string) uint64
+String returns the hash of s with the given seed.
+
+String is equivalent to, but more convenient and efficient than:
+
+var h Hash
+h.SetSeed(seed)
+h.WriteString(s)
+return h.Sum64()
+Types ¶
+type Hash ¶
+type Hash struct {
+	// contains filtered or unexported fields
+}
+A Hash computes a seeded hash of a byte sequence.
+
+The zero Hash is a valid Hash ready to use. A zero Hash chooses a random seed for itself during the first call to a Reset, Write, Seed, or Sum64 method. For control over the seed, use SetSeed.
+
+The computed hash values depend only on the initial seed and the sequence of bytes provided to the Hash object, not on the way in which the bytes are provided. For example, the three sequences
+
+h.Write([]byte{'f','o','o'})
+h.WriteByte('f'); h.WriteByte('o'); h.WriteByte('o')
+h.WriteString("foo")
+all have the same effect.
+
+Hashes are intended to be collision-resistant, even for situations where an adversary controls the byte sequences being hashed.
+
+A Hash is not safe for concurrent use by multiple goroutines, but a Seed is. If multiple goroutines must compute the same seeded hash, each can declare its own Hash and call SetSeed with a common Seed.
+
+func (*Hash) BlockSize ¶
+func (h *Hash) BlockSize() int
+BlockSize returns h's block size.
+
+func (*Hash) Reset ¶
+func (h *Hash) Reset()
+Reset discards all bytes added to h. (The seed remains the same.)
+
+func (*Hash) Seed ¶
+func (h *Hash) Seed() Seed
+Seed returns h's seed value.
+
+func (*Hash) SetSeed ¶
+func (h *Hash) SetSeed(seed Seed)
+SetSeed sets h to use seed, which must have been returned by MakeSeed or by another Hash's Seed method. Two Hash objects with the same seed behave identically. Two Hash objects with different seeds will very likely behave differently. Any bytes added to h before this call will be discarded.
+
+func (*Hash) Size ¶
+func (h *Hash) Size() int
+Size returns h's hash value size, 8 bytes.
+
+func (*Hash) Sum ¶
+func (h *Hash) Sum(b []byte) []byte
+Sum appends the hash's current 64-bit value to b. It exists for implementing hash.Hash. For direct calls, it is more efficient to use Sum64.
+
+func (*Hash) Sum64 ¶
+func (h *Hash) Sum64() uint64
+Sum64 returns h's current 64-bit value, which depends on h's seed and the sequence of bytes added to h since the last call to Reset or SetSeed.
+
+All bits of the Sum64 result are close to uniformly and independently distributed, so it can be safely reduced by using bit masking, shifting, or modular arithmetic.
+
+func (*Hash) Write ¶
+func (h *Hash) Write(b []byte) (int, error)
+Write adds b to the sequence of bytes hashed by h. It always writes all of b and never fails; the count and error result are for implementing io.Writer.
+
+func (*Hash) WriteByte ¶
+func (h *Hash) WriteByte(b byte) error
+WriteByte adds b to the sequence of bytes hashed by h. It never fails; the error result is for implementing io.ByteWriter.
+
+func (*Hash) WriteString ¶
+func (h *Hash) WriteString(s string) (int, error)
+WriteString adds the bytes of s to the sequence of bytes hashed by h. It always writes all of s and never fails; the count and error result are for implementing io.StringWriter.
+
+type Seed ¶
+type Seed struct {
+	// contains filtered or unexported fields
+}
+A Seed is a random value that selects the specific hash function computed by a Hash. If two Hashes use the same Seeds, they will compute the same hash values for any given input. If two Hashes use different Seeds, they are very likely to compute distinct hash values for any given input.
+
+A Seed must be initialized by calling MakeSeed. The zero seed is uninitialized and not valid for use with Hash's SetSeed method.
+
+Each Seed value is local to a single process and cannot be serialized or otherwise recreated in a different process.
+
+func MakeSeed ¶
+func MakeSeed() Seed
+MakeSeed returns a new random seed.
+""",
+    "separator": "// Please create a very short program which combines maphash with other go features in a complex way",
+    "begin": 'package main\nimport (\n\t"hash/maphash"\n',
+    "target_api": "maphash",
+}
+
+go_strconv = {
+    "docstring": """
+Overview ¶
+Numeric Conversions
+String Conversions
+Package strconv implements conversions to and from string representations of basic data types.
+
+Numeric Conversions ¶
+The most common numeric conversions are Atoi (string to int) and Itoa (int to string).
+
+i, err := strconv.Atoi("-42")
+s := strconv.Itoa(-42)
+These assume decimal and the Go int type.
+
+ParseBool, ParseFloat, ParseInt, and ParseUint convert strings to values:
+
+b, err := strconv.ParseBool("true")
+f, err := strconv.ParseFloat("3.1415", 64)
+i, err := strconv.ParseInt("-42", 10, 64)
+u, err := strconv.ParseUint("42", 10, 64)
+The parse functions return the widest type (float64, int64, and uint64), but if the size argument specifies a narrower width the result can be converted to that narrower type without data loss:
+
+s := "2147483647" // biggest int32
+i64, err := strconv.ParseInt(s, 10, 32)
+...
+i := int32(i64)
+FormatBool, FormatFloat, FormatInt, and FormatUint convert values to strings:
+
+s := strconv.FormatBool(true)
+s := strconv.FormatFloat(3.1415, 'E', -1, 64)
+s := strconv.FormatInt(-42, 16)
+s := strconv.FormatUint(42, 16)
+AppendBool, AppendFloat, AppendInt, and AppendUint are similar but append the formatted value to a destination slice.
+
+String Conversions ¶
+Quote and QuoteToASCII convert strings to quoted Go string literals. The latter guarantees that the result is an ASCII string, by escaping any non-ASCII Unicode with:
+
+q := strconv.Quote("Hello, 世界")
+q := strconv.QuoteToASCII("Hello, 世界")
+QuoteRune and QuoteRuneToASCII are similar but accept runes and return quoted Go rune literals.
+
+Unquote and UnquoteChar unquote Go string and rune literals.
+
+Index ¶
+Constants
+Variables
+func AppendBool(dst []byte, b bool) []byte
+func AppendFloat(dst []byte, f float64, fmt byte, prec, bitSize int) []byte
+func AppendInt(dst []byte, i int64, base int) []byte
+func AppendQuote(dst []byte, s string) []byte
+func AppendQuoteRune(dst []byte, r rune) []byte
+func AppendQuoteRuneToASCII(dst []byte, r rune) []byte
+func AppendQuoteRuneToGraphic(dst []byte, r rune) []byte
+func AppendQuoteToASCII(dst []byte, s string) []byte
+func AppendQuoteToGraphic(dst []byte, s string) []byte
+func AppendUint(dst []byte, i uint64, base int) []byte
+func Atoi(s string) (int, error)
+func CanBackquote(s string) bool
+func FormatBool(b bool) string
+func FormatComplex(c complex128, fmt byte, prec, bitSize int) string
+func FormatFloat(f float64, fmt byte, prec, bitSize int) string
+func FormatInt(i int64, base int) string
+func FormatUint(i uint64, base int) string
+func IsGraphic(r rune) bool
+func IsPrint(r rune) bool
+func Itoa(i int) string
+func ParseBool(str string) (bool, error)
+func ParseComplex(s string, bitSize int) (complex128, error)
+func ParseFloat(s string, bitSize int) (float64, error)
+func ParseInt(s string, base int, bitSize int) (i int64, err error)
+func ParseUint(s string, base int, bitSize int) (uint64, error)
+func Quote(s string) string
+func QuoteRune(r rune) string
+func QuoteRuneToASCII(r rune) string
+func QuoteRuneToGraphic(r rune) string
+func QuoteToASCII(s string) string
+func QuoteToGraphic(s string) string
+func QuotedPrefix(s string) (string, error)
+func Unquote(s string) (string, error)
+func UnquoteChar(s string, quote byte) (value rune, multibyte bool, tail string, err error)
+type NumError
+""",
+    "separator": "// Please create a very short program which combines strconv with other go features in a complex way",
+    "begin": 'package main\nimport (\n\t"strconv"\n',
+    "target_api": "strconv",
+}
+
 go_reflect = {
     "docstring": """
     Overview ¶
@@ -241,7 +625,7 @@ type ValueError
 func (e *ValueError) Error() string
 """,
     "separator": "// Please create a very short program which combines reflect with other go features in a complex way",
-    "begin": 'package main\nimport (\n\t"reflect"\n)\n',
+    "begin": 'package main\nimport (\n\t"reflect"\n',
     "target_api": "reflect",
 }
 go_big_math = {
