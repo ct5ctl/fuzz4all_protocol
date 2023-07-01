@@ -10,6 +10,7 @@ from FuzzAll.target.CPP.template import (
     cpp_23,
     cpp_apply,
     cpp_expected,
+    cpp_expected_example,
     cpp_is_scoped_enum,
     cpp_optional,
     cpp_span,
@@ -79,6 +80,8 @@ class CPPTarget(Target):
             self.prompt_used = cpp_variant
         elif kwargs["template"] == "cpp_expected":
             self.prompt_used = cpp_expected
+        elif kwargs["template"] == "cpp_expected_example":
+            self.prompt_used = cpp_expected_example
         elif kwargs["template"] == "cpp_apply":
             self.prompt_used = cpp_apply
         elif kwargs["template"] == "cpp_23":
@@ -123,6 +126,45 @@ class CPPTarget(Target):
             ]
         )
         return code
+
+    def validate_compiler_with_opt(self, compiler, filename) -> (FResult, str):
+
+        base_result, base_message = self.validate_compiler(compiler, filename)
+        if base_result == FResult.TIMED_OUT:
+            return base_result, base_message
+
+        results = [base_result]
+        messages = [f"base\n{base_message}"]
+
+        for opt in ["-O3", "-O2", "-O1"]:
+            try:
+                exit_code = subprocess.run(
+                    f"{compiler} -std={MOST_RECENT_GCC_STD_VERSION} -x c++ {opt} {filename} -o /tmp/out{self.CURRENT_TIME}",
+                    shell=True,
+                    capture_output=True,
+                    encoding="utf-8",
+                    timeout=5,
+                    text=True,
+                )
+            except subprocess.TimeoutExpired:
+                results.append(FResult.TIMED_OUT)
+                messages.append(f"Optimization {opt} Timeout")
+                continue
+            if exit_code.returncode == 0:
+                results.append(FResult.SAFE)
+                messages.append(f"Optimization {opt} is safe")
+            elif exit_code.returncode != 0:
+                results.append(FResult.FAILURE)
+                messages.append(f"Optimization {opt}:\n{exit_code.stderr}")
+
+        if (
+            FResult.ERROR in results or FResult.FAILURE in results
+        ) and FResult.SAFE in results:
+            return FResult.ERROR, "leading to incorrect optimization!" + "\n".join(
+                messages
+            )
+
+        return base_result, "\n".join(messages)
 
     def validate_compiler(self, compiler, filename) -> (FResult, str):
         # check without -c option (+ linking)
