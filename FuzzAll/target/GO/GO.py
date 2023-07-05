@@ -11,6 +11,7 @@ from FuzzAll.target.GO.template import (
     go_heap,
     go_maphash,
     go_reflect,
+    go_std,
     go_strconv,
 )
 from FuzzAll.target.target import FResult, Target
@@ -35,8 +36,12 @@ class GOTarget(Target):
             self.prompt_used = go_strconv
         elif kwargs["template"] == "go_bytes":
             self.prompt_used = go_bytes
+        elif kwargs["template"] == "go_std":
+            self.prompt_used = go_std
         else:
             raise NotImplementedError
+
+        self.special_eos = "package main"
 
     def validate_prompt(self, prompt: str):
         # TODO
