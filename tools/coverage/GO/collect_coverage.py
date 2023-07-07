@@ -189,7 +189,14 @@ def coverage_loop(args):
         # setup
         setup()
 
-        prev_coverage = {}
+        import json
+
+        with open(
+            "/home/steven/fastd/fuzzall/FuzzAll/experiment/go/std_library/prev_coverage.json",
+            "r",
+        ) as f:
+            prev_coverage = json.load(f)
+        # prev_coverage = {}
 
         # loop through all files in folder in alphanumeric order
         files = glob.glob(args.folder + "/*.fuzz")
@@ -216,18 +223,23 @@ def coverage_loop(args):
 
             index += 1
 
+        import json
+
+        with open(args.folder + "/prev_coverage.json", "w") as f:
+            json.dump(prev_coverage, f, indent=4)
+
 
 def main():
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument("--folder", type=str, default="Results/test")
-    # parser.add_argument("--interval", type=int, required=True)
-    # parser.add_argument("--start", type=int, default=0)
-    # parser.add_argument("--end", type=int, default=1000000000)
-    #
-    # args = parser.parse_args()
-    #
-    # coverage_loop(args)
-    test_textfmt()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--folder", type=str, default="Results/test")
+    parser.add_argument("--interval", type=int, required=True)
+    parser.add_argument("--start", type=int, default=0)
+    parser.add_argument("--end", type=int, default=1000000000)
+
+    args = parser.parse_args()
+
+    coverage_loop(args)
+    # test_textfmt()
 
 
 if __name__ == "__main__":

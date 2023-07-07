@@ -167,10 +167,57 @@ def coverage_loop(args):
         save_coverage(args)
 
 
+def sum_coverage(args):
+    with Progress(
+        TextColumn("Fuzzing • [progress.percentage]{task.percentage:>3.0f}%"),
+        BarColumn(),
+        MofNCompleteColumn(),
+        TextColumn("•"),
+        TimeElapsedColumn(),
+    ) as p:
+        # clean coverage
+        clean_coverage(args)
+
+        # loop through all files in folder in alphanumeric order
+        for folder in args.folders:
+            files = glob.glob(folder + "/*.fuzz")
+            files.sort(key=natural_sort_key)
+            index = 0
+            for file in p.track(files):
+                # skip until start
+                if index + 1 < args.start:
+                    index += 1
+                    continue
+
+                # compile the file
+                run_compile(
+                    args.compiler,
+                    file,
+                    f"-x c++ -std=c++23 {args.e_include}",
+                    f"-o /tmp/out{CURRENT_TIME}",
+                )
+                if args.opt:
+                    opt = ["-O3", "-O2", "-O1"]
+                    for o in opt:
+                        run_compile(
+                            args.compiler,
+                            file,
+                            f"-x c++ -std=c++23 {o} {args.e_include}",
+                            f"-o /tmp/out{CURRENT_TIME}",
+                        )
+                if index + 1 >= args.end:
+                    break
+                index += 1
+
+        # get the coverage
+        line_cov, func_cov = get_coverage(args)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--compiler", type=str, required=True)
-    parser.add_argument("--folder", type=str, required=True)
+    parser.add_argument("--folder", type=str)
+    parser.add_argument("--folders", nargs="+", help="<Required> Set flag")
     parser.add_argument("--interval", type=int, required=True)
     parser.add_argument("--start", type=int, default=0)
     parser.add_argument("--end", type=int, default=1000000000)
@@ -180,7 +227,12 @@ def main():
     parser.add_argument("--opt", action="store_true")
     args = parser.parse_args()
 
-    coverage_loop(args)
+    if args.folder is not None:
+        coverage_loop(args)
+    elif args.folders is not None:
+        sum_coverage(args)
+    else:
+        print("No folder specified")
 
 
 if __name__ == "__main__":
