@@ -6,6 +6,7 @@ import torch
 
 from FuzzAll.target.SMT.template import (
     smt2_auflia,
+    smt2_general,
     smt2_lia,
     smt2_lia_example,
     smt2_lia_example_doc,
@@ -71,8 +72,12 @@ class SMTTarget(Target):
             self.prompt_used = smt2_auflia
         elif kwargs["template"] == "smt2_lra":
             self.prompt_used = smt2_lra
+        elif kwargs["template"] == "smt2_general":
+            self.prompt_used = smt2_general
         else:
             raise NotImplementedError
+
+        self.special_eos = "#|"
 
     def write_back_file(self, code):
         try:
