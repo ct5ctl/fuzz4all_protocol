@@ -1,6 +1,7 @@
 import os
 import subprocess
 import time
+from pathlib import Path
 from re import search
 from typing import List, Union
 
@@ -74,6 +75,42 @@ class JAVATarget(Target):
         return "/tmp/temp{0}/{1}.java".format(
             self.CURRENT_TIME, public_class_name[0].split()[-1]
         )
+
+    def check_syntax_valid(code):
+        with open("/tmp/temp{}.java".format(self.CURRENT_TIME), "w") as f:
+            f.write(code)
+        try:
+            jarName = "java_syntax_checker.jar"
+            jarPath = Path.cwd() / "syntax" / jarName
+            exit_code = subprocess.run(
+                "java -jar {} {}".format(
+                    jarPath.as_posix(),
+                    "/tmp/temp{}.java".format(self.CURRENT_TIME),
+                ),
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if exit_code.returncode == 0:
+                return True
+            else:
+                return False
+        except subprocess.TimeoutExpired as te:
+            pname = "'temp{}.java'".format(self.CURRENT_TIME)
+            subprocess.run(
+                ["ps -ef | grep " + pname + " | grep -v grep | awk '{print $2}'"],
+                shell=True,
+            )
+            subprocess.run(
+                [
+                    "ps -ef | grep "
+                    + pname
+                    + " | grep -v grep | awk '{print $2}' | xargs -r kill -9"
+                ],
+                shell=True,
+            )  # kill all tests thank you
+            return False
 
     def validate_individual(self, filename) -> (FResult, str):
         write_back_name = ""
