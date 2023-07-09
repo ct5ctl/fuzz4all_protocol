@@ -124,6 +124,10 @@ def coverage_loop(args):
 
         # loop through all files in folder in alphanumeric order
         files = glob.glob(args.folder + "/*.fuzz")
+        files.sort(key=os.path.getmtime)
+        start_time = os.path.getmtime(files[0])
+
+        files = glob.glob(args.folder + "/*.fuzz")
         files.sort(key=natural_sort_key)
         index = 0
         for file in p.track(files):
@@ -152,13 +156,14 @@ def coverage_loop(args):
             if (index + 1) % args.interval == 0 and index + 1 >= args.start:
                 # get the coverage
                 line_cov, func_cov = get_coverage(args)
+                time_seconds = os.path.getmtime(file) - start_time
                 # append to csv file
                 if args.opt:
                     with open(args.folder + "/coverage_opt.csv", "a") as f:
-                        f.write(f"{index + 1},{line_cov},{func_cov}\n")
+                        f.write(f"{index + 1},{line_cov},{func_cov},{time_seconds}\n")
                 else:
                     with open(args.folder + "/coverage.csv", "a") as f:
-                        f.write(f"{index + 1},{line_cov},{func_cov}\n")
+                        f.write(f"{index + 1},{line_cov},{func_cov},{time_seconds}\n")
 
             if index + 1 >= args.end:
                 break

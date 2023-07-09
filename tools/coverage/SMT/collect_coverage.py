@@ -81,7 +81,11 @@ def coverage_loop(args):
     ) as p:
         # clean coverage
         clean_coverage(args)
+        import os
 
+        files = glob.glob(args.folder + "/*.fuzz")
+        files.sort(key=os.path.getmtime)
+        start_time = os.path.getmtime(files[0])
         # loop through all files in folder in alphanumeric order
         files = glob.glob(args.folder + "/*.fuzz")
         files.sort(key=natural_sort_key)
@@ -103,8 +107,11 @@ def coverage_loop(args):
                 run_smt(args.smt, file, "-m -i -q --check-models --lang smt2", "")
             if (index + 1) % int(args.interval) == 0:
                 line_cov, func_cov = get_coverage(args)
+                time_seconds = os.path.getmtime(file) - start_time
+
                 with open(args.folder + "/coverage.csv", "a") as f:
-                    f.write(f"{index + 1},{line_cov},{func_cov}\n")
+                    f.write(f"{index + 1},{line_cov},{func_cov},{time_seconds}\n")
+
             index += 1
 
 
