@@ -5,7 +5,7 @@ from pathlib import Path
 from re import search
 from typing import List, Union
 
-from FuzzAll.target.JAVA.template import java_concurrent, java_text
+from FuzzAll.target.JAVA.template import java_concurrent, java_std, java_text
 from FuzzAll.target.target import FResult, Target
 from FuzzAll.util.Logger import LEVEL
 from FuzzAll.util.util import comment_remover
@@ -22,6 +22,8 @@ class JAVATarget(Target):
             self.prompt_used = java_text
         elif kwargs["template"] == "java_concurrent":
             self.prompt_used = java_concurrent
+        elif kwargs["template"] == "java_std":
+            self.prompt_used = java_std
         else:
             raise NotImplementedError
 
@@ -80,7 +82,7 @@ class JAVATarget(Target):
             self.CURRENT_TIME, public_class_name[0].split()[-1]
         )
 
-    def check_syntax_valid(code):
+    def check_syntax_valid(self, code):
         with open("/tmp/temp{}.java".format(self.CURRENT_TIME), "w") as f:
             f.write(code)
         try:
