@@ -5,3 +5,5 @@ tiktoken
 torch
 transformers
 python-dotenv
+click
+PyYAML
