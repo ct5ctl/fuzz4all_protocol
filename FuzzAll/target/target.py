@@ -3,7 +3,7 @@ import os
 import random
 import time
 from enum import Enum
-from typing import List, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import torch
 from rich.progress import track
@@ -22,6 +22,9 @@ class FResult(Enum):
     SAFE = 1  # validation returns okay
     FAILURE = 2  # validation contains error (something wrong with validation)
     ERROR = 3  # validation returns a potential error (look into)
+    LLM_WEAKNESS = (
+        4  # the generated input is ill-formed due to the weakness of the language model
+    )
     TIMED_OUT = 10  # timed out, can be okay in certain targets
 
 
@@ -37,6 +40,9 @@ class Target(object):
         # model based variables
         self.batch_size = kwargs["bs"]
         self.temperature = kwargs["temperature"]
+        self.max_length = kwargs["max_length"]
+        self.device = kwargs["device"]
+        self.model_name = kwargs["model_name"]
         self.model = None
         # loggers
         self.g_logger = Logger(self.folder, "log_generation.txt", level=kwargs["level"])
@@ -51,7 +57,7 @@ class Target(object):
             "functionality of the target "
         )
         # prompt based variables
-        self.hw = kwargs["use_kw"]
+        self.hw = kwargs["use_hw"]
         self.no_input_prompt = kwargs["no_input_prompt"]
         self.prompt_used = None
         self.prompt = None
@@ -70,6 +76,30 @@ class Target(object):
         )
         self.p_strategy = kwargs["prompt_strategy"]
 
+    def _create_prompt_from_config(self, config_dict: Dict[str, Any]) -> str:
+        """Read the prompt ingredients via a config file."""
+
+        # read the prompt ingredients from the config file
+        target = config_dict["target"]
+        path_documentation = target["path_documentation"]
+        documentation = open(path_documentation, "r").read()
+        path_example_code = target["path_example_code"]
+        example_code = open(path_example_code, "r").read()
+        trigger_to_generate_input = target["trigger_to_generate_input"]
+        input_hint = target["input_hint"]
+        path_hand_written_prompt = target["path_hand_written_prompt"]
+        hand_written_prompt = open(path_hand_written_prompt, "r").read()
+        target_string = target["target_string"]
+        dict_compat = {
+            "docstring": documentation,
+            "example_code": example_code,
+            "separator": trigger_to_generate_input,
+            "begin": input_hint,
+            "hw_prompt": hand_written_prompt,
+            "target_api": target_string,
+        }
+        return dict_compat
+
     # used for fuzzing to check valid syntax
     def check_syntax_valid(self, code: str) -> bool:
         # by default return true as there might not be need for syntax check
@@ -85,7 +115,7 @@ class Target(object):
             prompt,
             batch_size=self.batch_size,
             temperature=self.temperature,
-            max_length=1024,
+            max_length=self.max_length,
         )
         unique_set = set()
         score = 0
@@ -187,13 +217,26 @@ class Target(object):
             "Initializing ... this may take a while ...", level=LEVEL.INFO
         )
         self.m_logger.logo("Loading model ...", level=LEVEL.INFO)
+        eos = [
+            self.prompt_used["separator"],
+            "<eom>",  # for codegen2
+            self.se_prompt,
+            self.m_prompt,
+            self.c_prompt,
+        ]
+        # if the config_dict is an attribute, add additional eos from config_dict
+        # which might be model specific
+        if hasattr(self, "config_dict"):
+            llm = self.config_dict["llm"]
+            model_name = llm["model_name"]
+            additional_eos = llm.get("additional_eos", [])
+            if additional_eos:
+                eos = eos + additional_eos
         self.model = make_model(
-            eos=[
-                self.prompt_used["separator"],
-                self.se_prompt,
-                self.m_prompt,
-                self.c_prompt,
-            ]
+            eos=eos,
+            model_name=model_name,
+            device=self.device,
+            max_length=self.max_length,
         )
         self.m_logger.logo("Model Loaded", level=LEVEL.INFO)
         self.initial_prompt = self.auto_prompt(
