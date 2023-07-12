@@ -14,7 +14,11 @@ from FuzzAll.util.util import comment_remover
 class JAVATarget(Target):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        if kwargs["template"] == "java_text":
+        if kwargs["template"] == "fuzzing_with_config_file":
+            config_dict = kwargs["config_dict"]
+            self.prompt_used = self._create_prompt_from_config(config_dict)
+            self.config_dict = config_dict
+        elif kwargs["template"] == "java_text":
             self.prompt_used = java_text
         elif kwargs["template"] == "java_concurrent":
             self.prompt_used = java_concurrent
