@@ -2,8 +2,8 @@
 
 Usage:
 1. Use with config file (from the main repo folder):
-    python FuzzAll/fuzz.py --config=<config_file> main_with_config
-    e.g. python FuzzAll/fuzz.py --config=config/v02_qiskit_basic.yaml main_with_config
+    python FuzzAll/fuzz.py --config=<config_file> main_with_config --folder output_folder
+    e.g. python FuzzAll/fuzz.py --config=config/v02_qiskit_basic.yaml main_with_config --folder /tmp/fuzzing_output
 2. Use with command line arguments (from the main repo folder):
     python FuzzAll/fuzz.py main \
     --language=cpp --num=10 --otf --level=1 \
