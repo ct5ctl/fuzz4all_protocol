@@ -7,8 +7,10 @@ fuzzing:
   output_folder: Results/qiskit/v03_untargetted_metamorphic
   # number of fuzzing iterations
   num: 10000
+  # total fuzzing time in hours
+  total_time: 24
   # level of logging: 1 = INFO, 2 = TRACE, 3 = VERBOSE
-  log_level: 1
+  log_level: 3
   # use to validate fuzzing outputs on the fly.
   # If flag not set then only generation will be done. (Default: false)
   otf: true
@@ -73,9 +75,9 @@ llm:
   # batch size
   batch_size: 30
   # use hardware acceleration (GPU) for the LLM model
-  device: cuda:1
+  device: cuda
   # model name according to the HuggingFace model hub
-  model_name: bigcode/tiny_starcoder_py
+  model_name: bigcode/starcoderbase
   # local model folder (absolute path)
   # if not set, the model will be downloaded from the HuggingFace model hub
   # model_folder: /home/username/local_model_repository
