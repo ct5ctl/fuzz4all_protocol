@@ -1,4 +1,4 @@
-# Qiskit
+   # Qiskit
 
 ## Installation
 
@@ -28,5 +28,5 @@ To run the transpiler of Qiskit, the python code needs to be executed, thus we n
     ```
 1. Run a simple python script `Results/qiskit/0.fuzz` inside the docker container.
     ```shell
-    docker run -v $(pwd)/Results/qiskit/0.fuzz:/0.fuzz qiskit-driver python3.10 /0.fuzz
+    docker run -v $(pwd)/Results/qiskit/0.fuzz:/0.fuzz qiskit-driver /0.fuzz
     ```

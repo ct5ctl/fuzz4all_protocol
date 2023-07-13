@@ -220,7 +220,7 @@ class QiskitTarget(Target):
 
         # check that it contains a circuit " qc."
         if "qc." not in program_content:
-            return FResult.LLM_WEAKNESS, "no circuit `qc.` found"
+            return FResult.FAILURE, "no circuit `qc.` found"
 
         # check that the code can be transpiled
         # create two variants of the programs with different opt. levels
@@ -253,7 +253,7 @@ class QiskitTarget(Target):
                 self.v_logger.logo(f"Execution result: {exit_code}")
             except ValueError as e:
                 self._kill_program(filepath)
-                return FResult.ERROR, f"ValueError: {str(e)}"
+                return FResult.FAILURE, f"ValueError: {str(e)}"
             except subprocess.TimeoutExpired:
                 # kill program
                 self._kill_program(filepath)
@@ -300,10 +300,10 @@ class QiskitTarget(Target):
                 if "TranspilerError" in exit_code.stderr:
                     return FResult.ERROR, exit_code.stderr
                 else:
-                    return FResult.LLM_WEAKNESS, "its safe"
+                    return FResult.FAILURE, "its safe"
         except ValueError as e:
             self._kill_program(filepath)
-            return FResult.ERROR, f"ValueError: {str(e)}"
+            return FResult.FAILURE, f"ValueError: {str(e)}"
         except subprocess.TimeoutExpired:
             # kill program
             self._kill_program(filepath)
@@ -337,10 +337,10 @@ class QiskitTarget(Target):
                 if "QasmError" in exit_code.stderr:
                     return FResult.ERROR, "qasm error: POTENTIAL BUG"
                 else:
-                    return FResult.SAFE, "its safe"
+                    return FResult.FAILURE, exit_code.stderr
         except ValueError as e:
             self._kill_program(filepath)
-            return FResult.ERROR, f"ValueError: {str(e)}"
+            return FResult.FAILURE, f"ValueError: {str(e)}"
         except subprocess.TimeoutExpired:
             # kill program
             self._kill_program(filepath)
