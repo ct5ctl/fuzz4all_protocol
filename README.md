@@ -23,22 +23,31 @@ Note: to save the conda environment, run `conda env export > environment.yml` an
 
 ### Usage
 
-To run the approach you need to use a `.env` file among those provided as template in the `envs` folder. The `.env` file contains the configuration for the approach.
+To download the models for the local language model, you need a way to retireve them, either from HuggingFace directly or from a local repository.
+To point the program to the right location, you need to set either the environment variable `HUGGING_FACE_HUB_TOKEN` or `HF_HOME`.
+See the two examples of `.env` files in the `envs` folder.
 Copy one of them in the root directory and rename it `.env`.
 
-Change the global variable `SELECTED_OPTION` to match the environment you want to use. For example, if you want to use the environment `envs/.env.from_hf`, you need to set:
+You can run the approach either passing the arguments directly to the script or by using a configuration file.
 
-```python
-...
-SELECTED_OPTION = CACHESETUP.MODEL_CACHED_LOCALLY
-...
-```
-
-Then, you can run the approach with the following command:
+#### Arguments
 
 ```shell
-python fuzz.py \
---language cpp --num 10 --evaluate --otf --level 3 \
---template cpp_expected \
---bs 1 --temperature 1.0 --prompt_strategy 0 --use_hw
+    python FuzzAll/fuzz.py main \
+    --language=cpp --num=10 --otf --level=1 \
+    --template=cpp_expected \
+    --bs=1 --temperature=1.0 --prompt_strategy=0 --use_hw
 ```
+
+#### Configuration file
+
+```shell
+    python FuzzAll/fuzz.py \
+        --config=<config_file_path> main_with_config \
+        --folder output_folder
+    e.g. python FuzzAll/fuzz.py \
+        --config=config/v01_cpp_expected.yaml main_with_config \
+        --folder /tmp/fuzzing_output
+```
+The path to the configuration file is relative to the root directory of the project.
+

@@ -27,7 +27,7 @@ import glob
 
 qasm_files = glob.glob("*.qasm")
 for qasm_file in qasm_files:
-    print(f"Importing {qasm_file}")
+    print(f"Importing {qasm_file} - MAGIC_STRING_THE_SCRIPT_EXECUTES_MY_QASM_IMPORTS")
     try:
         qc = QuantumCircuit.from_qasm_file(qasm_file)
     except Exception as e:
@@ -240,7 +240,7 @@ class QiskitTarget(Target):
                 # cmd = f"echo {new_filename}"
                 # cmd = f"python {new_filename}"
                 # docker run -v {new_filename}:/{only_new_filename} qiskit-driver {only_new_filename}
-                cmd = f"docker run --rm -v {new_filename}:/{only_new_filename} qiskit-driver {only_new_filename}"
+                cmd = f"docker run --rm -v {new_filename}:/{only_new_filename} qiskit-driver python {only_new_filename}"
                 exit_code = subprocess.run(
                     cmd,
                     shell=True,
@@ -283,7 +283,7 @@ class QiskitTarget(Target):
         abs_path = os.path.abspath(filepath)
         only_filename = os.path.basename(filepath)
         try:
-            cmd = f"docker run --rm -v {abs_path}:/{only_filename} qiskit-driver {only_filename}"
+            cmd = f"docker run --rm -v {abs_path}:/{only_filename} qiskit-driver python {only_filename}"
             exit_code = subprocess.run(
                 cmd,
                 shell=True,
@@ -320,7 +320,7 @@ class QiskitTarget(Target):
         abs_path = os.path.abspath(filepath)
         only_filename = os.path.basename(filepath)
         try:
-            cmd = f"docker run --rm -v {abs_path}:/{only_filename} qiskit-driver {only_filename}"
+            cmd = f"docker run --rm -v {abs_path}:/{only_filename} qiskit-driver python {only_filename}"
             exit_code = subprocess.run(
                 cmd,
                 shell=True,
@@ -334,7 +334,9 @@ class QiskitTarget(Target):
                 return FResult.SAFE, "its safe"
             else:
                 # check if the output contained a QasmError
-                if "QasmError" in exit_code.stderr:
+                # and if the code from the snippet was executed
+                clue = "MAGIC_STRING_THE_SCRIPT_EXECUTES_MY_QASM_IMPORTS"
+                if "QasmError" in exit_code.stderr and clue in exit_code.stdout:
                     return FResult.ERROR, "qasm error: POTENTIAL BUG"
                 else:
                     return FResult.FAILURE, exit_code.stderr
