@@ -13,10 +13,10 @@ fi
 # user-defined: where to build, and where to install
 readonly BUILDROOT="$(mktemp --directory --suffix "-openjdk-builder")"
 echo ${BUILDROOT}
-function cleanup() {
-  rm -rf "${BUILDROOT}" &> /dev/null || true
-}
-trap cleanup EXIT
+#function cleanup() {
+#  rm -rf "${BUILDROOT}" &> /dev/null || true
+#}
+#trap cleanup EXIT
 
 
 # Some Variables to run build, update depending on system
@@ -30,28 +30,35 @@ readonly JDK_20_TAR_NAME="openjdk-20.0.1_linux-x64_bin.tar.gz"
 
 mkdir -p "${BUILDROOT}"
 cd "${BUILDROOT}"
+
+#echo "$PWD"
+
 rm -rf * || true
 
-git clone git@github.com:openjdk/jdk.git
+#git clone git@github.com:openjdk/jdk.git
 
 ##################################################
 # Get temporary copy of jdk-18
 ##################################################
 
-wget ${JVM_20_LINK}
+#wget ${JVM_20_LINK}
 
-tar -xvf ${JDK_20_TAR_NAME}
+#tar -xvf ${JDK_20_TAR_NAME}
 
 ##################################################
 # BUILD OpenJDK
 ##################################################
 
-cd ${BUILDROOT}/${SRC_FOLDER_NAME}
+#cd ${BUILDROOT}/${SRC_FOLDER_NAME}
 
 # Configure build to use OpenJDK 18
-mkdir -p ${INSTALLROOT}
+#mkdir -p ${INSTALLROOT}
 
-bash configure --with-boot-jdk=${BUILDROOT}/${JVM_20_FOLDER} --exec-prefix=${INSTALLROOT} --prefix=${INSTALLROOT} --with-jvm-variants=zero
+echo "bash configure --with-boot-jdk=${BUILDROOT}/${JVM_20_FOLDER} --exec-prefix=${INSTALLROOT} --prefix=${INSTALLROOT} --with-cups=/usr/ --with-fontconfig-include=/usr/include/ --with-fontconfig=/usr/ --with-jvm-variants=zero"
+
+exit
+
+bash configure --with-boot-jdk=${BUILDROOT}/${JVM_20_FOLDER} --exec-prefix=${INSTALLROOT} --prefix=${INSTALLROOT} --with-cups=/usr/ --with-fontconfig-include=/usr/include/ --with-fontconfig=/usr/ --with-jvm-variants=zero
 
 # Make image and copy to destination folder
 make install

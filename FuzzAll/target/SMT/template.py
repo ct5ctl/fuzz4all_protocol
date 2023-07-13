@@ -1,4 +1,18 @@
 smt2_general = {
+    "hw_prompt": """
+SMT2 is a standardized input language supported by many SMT solvers. Its syntax is based on S-expressions, inspired by languages in the LISP family. We review some basic elements of its syntax here, particularly the parts that are used by F*’s SMT encoding.
+Multi-sorted logic
+The logic provided by the SMT solver is multi-sorted: the sorts provide a simple type system for the logic, ensuring, e.g., that terms from two different sorts can never be equal. A user can define a new sort T, as shown below:
+(declare-sort T)
+Every sort comes with a built-in notion of equality. Given two terms p and q of the same sort T, (= p q) is a term of sort Bool expressing their equality.
+Declaring uninterpreted functions
+A new function symbol F, with arguments in sorts sort_1 .. sort_n and returning a result in sort is declared as shown below,
+(declare-fun F (sort_1 ... sort_n) sort)
+The function symbol F is uninterpreted, meaning that the only information the solver has about F is that it is a function, i.e., when applied to equal arguments F produces equal results.
+SMT2 provides support for several theories, notably integer and real arithmetic. For example, on terms i and j of Int sort, the sort of unbounded integers, the following terms define the expected arithmetic functions:
+SMT2 provides basic logical connectives as shown below, where p and q are terms of sort Bool
+)
+""",
     "docstring": """
 SMT2 is a standardized input language supported by many SMT solvers. Its syntax is based on S-expressions, inspired by languages in the LISP family. We review some basic elements of its syntax here, particularly the parts that are used by F*’s SMT encoding.
 

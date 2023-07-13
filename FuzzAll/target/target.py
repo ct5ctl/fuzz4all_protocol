@@ -75,20 +75,29 @@ class Target(object):
             "Please combine the two previous programs into a single program"
         )
         self.p_strategy = kwargs["prompt_strategy"]
+        # eos based
+        self.special_eos = None
+        if "model_name" in kwargs:
+            self.model_name = kwargs["model_name"]
 
-    def _create_prompt_from_config(self, config_dict: Dict[str, Any]) -> str:
+    @staticmethod
+    def _create_prompt_from_config(config_dict: Dict[str, Any]) -> Dict:
         """Read the prompt ingredients via a config file."""
+        documentation, example_code, hand_written_prompt = None, None, None
 
         # read the prompt ingredients from the config file
         target = config_dict["target"]
         path_documentation = target["path_documentation"]
-        documentation = open(path_documentation, "r").read()
+        if path_documentation is not None:
+            documentation = open(path_documentation, "r").read()
         path_example_code = target["path_example_code"]
-        example_code = open(path_example_code, "r").read()
+        if path_example_code is not None:
+            example_code = open(path_example_code, "r").read()
         trigger_to_generate_input = target["trigger_to_generate_input"]
         input_hint = target["input_hint"]
         path_hand_written_prompt = target["path_hand_written_prompt"]
-        hand_written_prompt = open(path_hand_written_prompt, "r").read()
+        if path_hand_written_prompt is not None:
+            hand_written_prompt = open(path_hand_written_prompt, "r").read()
         target_string = target["target_string"]
         dict_compat = {
             "docstring": documentation,
@@ -153,7 +162,9 @@ class Target(object):
         # if we have already done auto-prompting, just return the best prompt
         if os.path.exists(self.folder + "/prompts/best_prompt.txt"):
             self.m_logger.logo("Use existing prompt ... ", level=LEVEL.INFO)
-            with open(self.folder + "/prompts/best_prompt.txt", "r") as f:
+            with open(
+                self.folder + "/prompts/best_prompt.txt", "r", encoding="utf-8"
+            ) as f:
                 return f.read()
         if kwargs["no_input_prompt"]:
             self.m_logger.logo("Without any input prompt ... ", level=LEVEL.INFO)
@@ -206,7 +217,7 @@ class Target(object):
                     f.write(f"\n{i} prompt score: {str(score)}")
 
         # dump best prompt
-        with open(self.folder + "/prompts/best_prompt.txt", "w") as f:
+        with open(self.folder + "/prompts/best_prompt.txt", "w", encoding="utf-8") as f:
             f.write(best_prompt)
 
         return best_prompt
@@ -232,6 +243,8 @@ class Target(object):
             additional_eos = llm.get("additional_eos", [])
             if additional_eos:
                 eos = eos + additional_eos
+        else:
+            model_name = self.model_name
         self.model = make_model(
             eos=eos,
             model_name=model_name,

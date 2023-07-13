@@ -13,6 +13,7 @@ Usage:
 """
 
 import os
+import time
 
 import click
 from rich.traceback import install
@@ -43,6 +44,7 @@ def write_to_file(fo, file_name):
 def fuzz(
     target: Target,
     number_of_iterations: int,
+    total_time: int,
     output_folder: str,
     resume: bool,
     otf: bool,
@@ -57,6 +59,7 @@ def fuzz(
     ) as p:
         task = p.add_task("Fuzzing", total=number_of_iterations)
         count = 0
+        start_time = time.time()
 
         if resume:
             n_existing = [
@@ -72,7 +75,10 @@ def fuzz(
 
         p.update(task, advance=count)
 
-        while count < number_of_iterations:
+        while (
+            count < number_of_iterations
+            and time.time() - start_time < total_time * 3600
+        ):
             fos = target.generate()
             if not fos:
                 target.initialize()
@@ -130,6 +136,9 @@ def cli(ctx, config_file):
     help="language to fuzz, currently supported: cpp, smt2, java, go",
 )
 @click.option("num", "--num", type=int, required=True, help="number of iterations")
+@click.option(
+    "total_time", "--total_time", type=int, required=True, help="total time in hours"
+)
 @click.option(
     "level",
     "--level",
@@ -196,6 +205,7 @@ def main(
     folder,
     language,
     num,
+    total_time,
     level,
     otf,
     resume,
@@ -206,14 +216,19 @@ def main(
     use_hw,
     no_input_prompt,
     prompt_strategy,
+    model_name,
+    max_length,
+    device,
 ):
     """Main function to start the fuzzing process with command line arguments."""
-
     target_kwargs = {
         "folder": folder,
         "language": language,
         "template": template,
         "bs": bs,
+        "max_length": max_length,
+        "device": device,
+        "model_name": model_name,
         "temperature": temperature,
         "use_hw": use_hw,
         "no_input_prompt": no_input_prompt,
@@ -227,6 +242,7 @@ def main(
         os.makedirs(folder, exist_ok=True)
         fuzz(
             target=target,
+            total_time=total_time,
             number_of_iterations=num,
             output_folder=folder,
             resume=resume,
@@ -238,7 +254,14 @@ def main(
 
 @cli.command("main_with_config")
 @click.pass_context
-def main_with_config(ctx):
+@click.option(
+    "folder",
+    "--folder",
+    type=str,
+    default="Results/test",
+    help="folder to store results",
+)
+def main_with_config(ctx, folder):
     """Run the main using a configuration file."""
     config_dict = ctx.obj["CONFIG_DICT"]
 
@@ -248,13 +271,14 @@ def main_with_config(ctx):
     target = make_target_with_config(config_dict)
     if not fuzzing["evaluate"]:
         assert (
-            not os.path.exists(fuzzing["output_folder"]) or fuzzing["resume"]
-        ), f"{fuzzing['output_folder']} already exists!"
+            not os.path.exists(folder) or fuzzing["resume"]
+        ), f"{folder} already exists!"
         os.makedirs(fuzzing["output_folder"], exist_ok=True)
         fuzz(
             target=target,
             number_of_iterations=fuzzing["num"],
-            output_folder=fuzzing["output_folder"],
+            total_time=fuzzing["total_time"],
+            output_folder=folder,
             resume=fuzzing["resume"],
             otf=fuzzing["otf"],
         )
