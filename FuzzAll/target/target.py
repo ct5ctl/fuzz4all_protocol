@@ -245,6 +245,10 @@ class Target(object):
                 eos = eos + additional_eos
         else:
             model_name = self.model_name
+
+        if self.special_eos is not None:
+            eos = eos + [self.special_eos]
+
         self.model = make_model(
             eos=eos,
             model_name=model_name,

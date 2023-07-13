@@ -267,6 +267,7 @@ def main_with_config(ctx, folder):
 
     print(config_dict)
     fuzzing = config_dict["fuzzing"]
+    config_dict["fuzzing"]["output_folder"] = folder
 
     target = make_target_with_config(config_dict)
     if not fuzzing["evaluate"]:
