@@ -70,7 +70,11 @@ class CPPTarget(Target):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.SYSTEM_MESSAGE = "You are a C++ Fuzzer"
-        if kwargs["template"] == "cpp_span":
+        if kwargs["template"] == "fuzzing_with_config_file":
+            config_dict = kwargs["config_dict"]
+            self.prompt_used = self._create_prompt_from_config(config_dict)
+            self.config_dict = config_dict
+        elif kwargs["template"] == "cpp_span":
             self.prompt_used = cpp_span
         elif kwargs["template"] == "cpp_is_scoped_enum":
             self.prompt_used = cpp_is_scoped_enum

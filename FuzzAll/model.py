@@ -1,7 +1,7 @@
 import os
 from enum import IntEnum
 from pathlib import Path
-from typing import List
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
 from dotenv import load_dotenv
@@ -12,30 +12,10 @@ from transformers import (
     StoppingCriteriaList,
 )
 
-
-class CACHESETUP(IntEnum):
-    MODEL_CACHED_LOCALLY = 1
-    MODEL_FROM_HUGGINGFACE = 2
-
-
-SELECTED_OPTION = CACHESETUP.MODEL_CACHED_LOCALLY
-
+# load the environment variable to use either a custom
+# HF_HOME or a custom HUGGING_FACE_HUB_TOKEN
 dotenv_path = Path(__file__).parent.resolve() / "../.env"
 load_dotenv(dotenv_path=dotenv_path)
-
-
-EXEC_MODE = os.environ.get("FUZZ_EXEC_MODE", "cuda")
-MODEL_NAME = os.environ.get("FUZZ_MODEL_NAME", "bigcode/tiny_starcoder_py")
-
-kwargs_for_hf_resoruces = {}
-
-if SELECTED_OPTION == CACHESETUP.MODEL_FROM_HUGGINGFACE:
-    AUTH_TOKEN = os.environ.get("HUGGING_FACE_HUB_TOKEN", None)
-    kwargs_for_hf_resoruces["use_auth_token"] = AUTH_TOKEN
-elif SELECTED_OPTION == CACHESETUP.MODEL_CACHED_LOCALLY:
-    os.environ["HF_HOME"] = os.environ.get("HF_HOME", "/JawTitan/huggingface/")
-    HF_CACHE_DIR = os.environ.get("HF_CACHE_DIR", "/JawTitan/huggingface/hub")
-    kwargs_for_hf_resoruces["cache_dir"] = HF_CACHE_DIR
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # disable warning
 EOF_STRINGS = ["<|endoftext|>", "###"]
@@ -82,18 +62,16 @@ class EndOfFunctionCriteria(StoppingCriteria):
 
 class StarCoder:
     def __init__(
-        self, device: str = EXEC_MODE, eos: List = None, max_length=3000
+        self, model_name: str, device: str, eos: List, max_length: int
     ) -> None:
-        checkpoint = MODEL_NAME
+        checkpoint = model_name
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained(
             checkpoint,
-            **kwargs_for_hf_resoruces,
         )
         self.model = (
             AutoModelForCausalLM.from_pretrained(
                 checkpoint,
-                **kwargs_for_hf_resoruces,
             )
             .to(torch.bfloat16)
             .to(device)
@@ -153,19 +131,15 @@ class StarCoder:
 
 class CodeGen2:
     def __init__(
-        self, device: str = EXEC_MODE, eos: List = None, max_length=3000
+        self, model_name: str, device: str, eos: List, max_length: int
     ) -> None:
-        checkpoint = MODEL_NAME
+        checkpoint = model_name
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained(
-            checkpoint,
-            **kwargs_for_hf_resoruces,
+            checkpoint, trust_remote_code=True
         )
         self.model = (
-            AutoModelForCausalLM.from_pretrained(
-                checkpoint,
-                **kwargs_for_hf_resoruces,
-            )
+            AutoModelForCausalLM.from_pretrained(checkpoint)
             .to(torch.bfloat16)
             .to(device)
         )
@@ -223,10 +197,33 @@ class CodeGen2:
         return outputs
 
 
-def make_model(eos: List = None):
-    if "starcoder" in MODEL_NAME.lower():
-        return StarCoder(eos=eos)
-    elif "codegen2" in MODEL_NAME.lower():
-        return CodeGen2(eos=eos)
-    return StarCoder(eos=eos)
-    # return CodeGen2(eos=eos)
+def make_model(eos: List, model_name: str, device: str, max_length: int):
+    """Returns a llm model instance (optional: using the configuration file)."""
+
+    kwargs_for_model = {
+        "model_name": model_name,
+        "eos": eos,
+        "device": device,
+        "max_length": max_length,
+    }
+
+    # print the model config
+    print("=== Model Config ===")
+    print(f"model_name: {model_name}")
+    for k, v in kwargs_for_model.items():
+        print(f"{k}: {v}")
+
+    if "starcoder" in model_name.lower():
+        model_obj = StarCoder(**kwargs_for_model)
+    elif "codegen2" in model_name.lower():
+        model_obj = CodeGen2(**kwargs_for_model)
+    else:
+        # default
+        model_obj = StarCoder(**kwargs_for_model)
+
+    model_obj_class_name = model_obj.__class__.__name__
+
+    print(f"model_obj (class name): {model_obj_class_name}")
+    print("====================")
+
+    return model_obj

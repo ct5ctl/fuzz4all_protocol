@@ -22,7 +22,11 @@ from FuzzAll.util.util import comment_remover
 class GOTarget(Target):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        if kwargs["template"] == "go_atomic":
+        if kwargs["template"] == "fuzzing_with_config_file":
+            config_dict = kwargs["config_dict"]
+            self.prompt_used = self._create_prompt_from_config(config_dict)
+            self.config_dict = config_dict
+        elif kwargs["template"] == "go_atomic":
             self.prompt_used = go_atomic
         elif kwargs["template"] == "go_heap":
             self.prompt_used = go_heap

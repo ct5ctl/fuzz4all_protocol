@@ -1,5 +1,7 @@
 import re
 
+import yaml
+
 
 def comment_remover(text, lang="cpp"):
     if lang == "cpp" or lang == "go" or lang == "java":
@@ -54,3 +56,10 @@ def natural_sort_key(s):
     return [
         int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)
     ]
+
+
+def load_config_file(filepath: str):
+    """Load the config file."""
+    with open(filepath, "r") as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+    return config
