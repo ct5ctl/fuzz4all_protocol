@@ -36,6 +36,35 @@ for qasm_file in qasm_files:
         content = open(qasm_file, "r").read()
         print(f"Content: {content}")
     """
+    CHECK_ANY_CIRCUIT = """
+# ==================== ORACLE ====================
+from qiskit.compiler import transpile
+from qiskit import QuantumCircuit
+class CustomFuzzAllException(Exception):
+    pass
+# get any the global variables (including the circuits)
+global_vars = list(globals().keys())
+# keep all those that are QuantumCircuit
+circuits = [
+    globals()[var] for var in global_vars
+    if isinstance(globals()[var], QuantumCircuit)
+]
+try:
+    # transpile them
+    for circuit in circuits:
+        for lvl in range(0, 4):
+            res = transpile(circuit, optimization_level=lvl)
+            # print(f"Optimization level {lvl} for circuit {circuit.name}")
+            # print(res.draw())
+
+    # conert them to qasm and back
+    for circuit in circuits:
+        # print(f"Converting to qasm and back for circuit {circuit.name}")
+        QuantumCircuit().from_qasm_str(circuit.qasm())
+except Exception as e:
+    raise CustomFuzzAllException(e)
+# ==================== ORACLE ====================
+"""
     TRANSPILE_QC_OPT_LVL_0 = """
 from qiskit.compiler import transpile
 qc = transpile(qc, optimization_level=0)
@@ -82,7 +111,7 @@ class QiskitTarget(Target):
         return f"/tmp/temp{self.CURRENT_TIME}.py"
 
     def wrap_prompt(self, prompt: str) -> str:
-        return f"/* {prompt} */\n{self.prompt_used['separator']}\n{self.prompt_used['begin']}"
+        return f"'''{prompt}'''\n{self.prompt_used['separator']}\n{self.prompt_used['begin']}"
 
     def wrap_in_comment(self, prompt: str) -> str:
         return f'""" {prompt} """'
@@ -130,7 +159,7 @@ class QiskitTarget(Target):
             content = open(filename, "r", encoding="utf-8").read()
             ast.parse(content)
         except Exception as e:
-            return FResult.LLM_WEAKNESS, f"parsing failed {e}"
+            return FResult.FAILURE, f"parsing failed {e}"
 
         return FResult.SAFE, "its safe"
 
@@ -170,6 +199,7 @@ class QiskitTarget(Target):
 
     def validate_individual(self, filepath: str) -> Tuple[FResult, str]:
         """Apply the oracle to define whether the input is valid or not."""
+        self.v_logger.logo("--------------------------", level=LEVEL.VERBOSE)
 
         # check if it can be parsed
         parser_result, parser_msg = self._validate_static(filepath)
@@ -191,6 +221,8 @@ class QiskitTarget(Target):
                 return self._validate_with_diff_opt_levels(filepath)
             elif oracle == "metamorphic":
                 return self._validate_with_QASM_roundtrip(filepath)
+            elif oracle == "opt_and_qasm":
+                return self._validate_any_circuit(filepath)
 
         return self._validate_with_crash_oracle(filepath)
 
@@ -338,6 +370,44 @@ class QiskitTarget(Target):
                 clue = "MAGIC_STRING_THE_SCRIPT_EXECUTES_MY_QASM_IMPORTS"
                 if "QasmError" in exit_code.stderr and clue in exit_code.stdout:
                     return FResult.ERROR, "qasm error: POTENTIAL BUG"
+                else:
+                    return FResult.FAILURE, exit_code.stderr
+        except ValueError as e:
+            self._kill_program(filepath)
+            return FResult.FAILURE, f"ValueError: {str(e)}"
+        except subprocess.TimeoutExpired:
+            # kill program
+            self._kill_program(filepath)
+            return FResult.TIMED_OUT, f"timed out"
+
+    def _validate_any_circuit(self, filepath: str) -> Tuple[FResult, str]:
+        """Check if any any circuit can be transpiled and converted to qasm.
+
+        To retrieve the circuit in the program we use the global variables.
+        """
+        program_content = open(filepath, "r", encoding="utf-8").read()
+        program_content += "\n" + str(Snippet.CHECK_ANY_CIRCUIT.value)
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write(program_content)
+            f.close()
+        abs_path = os.path.abspath(filepath)
+        only_filename = os.path.basename(filepath)
+        try:
+            cmd = f"docker run --rm -v {abs_path}:/{only_filename} qiskit-driver python {only_filename}"
+            exit_code = subprocess.run(
+                cmd,
+                shell=True,
+                capture_output=True,
+                encoding="utf-8",
+                timeout=5,
+                text=True,
+            )
+            self.v_logger.logo(f"Execution result: {exit_code}")
+            if exit_code.returncode == 0:
+                return FResult.SAFE, "its safe"
+            else:
+                if "CustomFuzzAllException" in exit_code.stderr:
+                    return FResult.ERROR, "CustomFuzzAllException: POTENTIAL BUG"
                 else:
                     return FResult.FAILURE, exit_code.stderr
         except ValueError as e:
