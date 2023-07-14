@@ -128,6 +128,7 @@ class QiskitTarget(Target):
 
     def clean_code(self, code: str) -> str:
         """Remove all comments and empty lines from a string of Python code."""
+        code = code.replace(self.prompt_used["begin"], "").strip()
         code = self._comment_remover(code)
         code = "\n".join(
             [
