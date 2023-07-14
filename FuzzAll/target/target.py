@@ -189,7 +189,9 @@ class Target(object):
             greedy_prompt = self.wrap_prompt(
                 response["choices"][0]["message"]["content"]
             )
-            with open(self.folder + "/prompts/greedy_prompt.txt", "w") as f:
+            with open(
+                self.folder + "/prompts/greedy_prompt.txt", "w", encoding="utf-8"
+            ) as f:
                 f.write(greedy_prompt)
             # repeated runs with temperature 1 to get additional prompts
             # choose the prompt with max score
@@ -206,7 +208,11 @@ class Target(object):
                 )
                 response = request_engine(config)
                 prompt = self.wrap_prompt(response["choices"][0]["message"]["content"])
-                with open(self.folder + "/prompts/prompt_{}.txt".format(i), "w") as f:
+                with open(
+                    self.folder + "/prompts/prompt_{}.txt".format(i),
+                    "w",
+                    encoding="utf-8",
+                ) as f:
                     f.write(prompt)
                 score = self.validate_prompt(prompt)
                 if score > best_score:
