@@ -62,7 +62,11 @@ class SMTTarget(Target):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.model = None  # to be declared
-        if kwargs["template"] == "smt2_lia":
+        if kwargs["template"] == "fuzzing_with_config_file":
+            config_dict = kwargs["config_dict"]
+            self.prompt_used = self._create_prompt_from_config(config_dict)
+            self.config_dict = config_dict
+        elif kwargs["template"] == "smt2_lia":
             self.prompt_used = smt2_lia
         elif kwargs["template"] == "smt2_lia_example":
             self.prompt_used = smt2_lia_example
@@ -155,6 +159,8 @@ class SMTTarget(Target):
                 shell=True,
             )  # kill all tests thank you
             return FResult.TIMED_OUT, "CVC5 Timed out"
+        except UnicodeDecodeError as ue:
+            return FResult.FAILURE, "UnicodeDecodeError"
 
         # run z3
         try:
@@ -181,6 +187,8 @@ class SMTTarget(Target):
                 shell=True,
             )  # kill all tests thank you
             return FResult.TIMED_OUT, "Z3 Timed out"
+        except UnicodeDecodeError as ue:
+            return FResult.FAILURE, "UnicodeDecodeError"
 
         # check for z3 assertion violation
         if "ASSERTION VIOLATION" in z3_exit_code.stderr:
