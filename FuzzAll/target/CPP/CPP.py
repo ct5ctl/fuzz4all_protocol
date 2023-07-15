@@ -59,6 +59,8 @@ def get_most_recent_cpp_version() -> str:
         f"19{ver}" if int(ver) >= 89 else f"20{ver}" for ver in cpp_versions
     ]
     cpp_versions = sorted(cpp_versions)
+    if len(cpp_versions) == 0:
+        return "no gcc found in"
     most_recent_cpp_version = cpp_versions[-1][-2:]
     return f"c++{most_recent_cpp_version}"
 
