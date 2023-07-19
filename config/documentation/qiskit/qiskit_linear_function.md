@@ -1,23 +1,3 @@
-Added high-level-synthesis plugins for LinearFunction, extending the set of synthesis methods that can be called from HighLevelSynthesis transpiler pass.
-
-For LinearFunction the available plugins are listed below:
-
-Plugin name
-
-High-level synthesis plugin
-
-default
-
-DefaultSynthesisLinearFunction
-
-kms
-
-KMSSynthesisLinearFunction
-
-pmh
-
-PMHSynthesisLinearFunction
-
 LinearFunction¶
 CLASSLinearFunction(linear, validate_input=False)[SOURCE]¶
 Bases: Gate
@@ -110,41 +90,3 @@ return instruction params.
 
 unit¶
 Get the time unit of duration.
-
-
-HighLevelSynthesis¶
-CLASSHighLevelSynthesis(*args, **kwargs)[SOURCE]¶
-Bases: TransformationPass
-
-Synthesize higher-level objects using synthesis plugins.
-
-Synthesis plugins apply synthesis methods specified in the high-level-synthesis config (refer to the documentation for HLSConfig).
-
-As an example, let us assume that op_a and op_b are names of two higher-level objects, that op_a-objects have two synthesis methods default which does require any additional parameters and other with two optional integer parameters option_1 and option_2, that op_b-objects have a single synthesis method default, and qc is a quantum circuit containing op_a and op_b objects. The following code snippet:
-
-hls_config = HLSConfig(op_b=[("other", {"option_1": 7, "option_2": 4})])
-pm = PassManager([HighLevelSynthesis(hls_config=hls_config)])
-transpiled_qc = pm.run(qc)
-shows how to run the alternative synthesis method other for op_b-objects, while using the default methods for all other high-level objects, including op_a-objects.
-
-Methods
-
-name
-
-Return the name of the pass.
-
-run
-
-Run the HighLevelSynthesis pass on dag.
-
-Attributes
-
-is_analysis_pass¶
-Check if the pass is an analysis pass.
-
-If the pass is an AnalysisPass, that means that the pass can analyze the DAG and write the results of that analysis in the property set. Modifications on the DAG are not allowed by this kind of pass.
-
-is_transformation_pass¶
-Check if the pass is a transformation pass.
-
-If the pass is a TransformationPass, that means that the pass can manipulate the DAG, but cannot modify the property set (but it can be read).
