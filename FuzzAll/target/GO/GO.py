@@ -47,10 +47,6 @@ class GOTarget(Target):
 
         self.special_eos = "package main"
 
-    def validate_prompt(self, prompt: str):
-        # TODO
-        return 0
-
     def wrap_prompt(self, prompt: str) -> str:
         return (
             f"// {prompt}\n{self.prompt_used['separator']}\n{self.prompt_used['begin']}"

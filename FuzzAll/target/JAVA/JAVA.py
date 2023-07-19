@@ -36,9 +36,6 @@ class JAVATarget(Target):
                 pass
         return "/tmp/temp{}.java".format(self.CURRENT_TIME)
 
-    def validate_prompt(self, prompt: str):
-        return 0
-
     def wrap_prompt(self, prompt: str) -> str:
         return f"/* {prompt} */\n{self.prompt_used['separator']}\n{self.prompt_used['begin']}"
 
