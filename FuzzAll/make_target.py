@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from FuzzAll.target.C.C import CTarget
 from FuzzAll.target.CPP.CPP import CPPTarget
 from FuzzAll.target.GO.GO import GOTarget
 from FuzzAll.target.JAVA.JAVA import JAVATarget
@@ -11,8 +12,10 @@ from FuzzAll.target.target import Target
 def make_target(kwargs: Dict[str, Any]) -> Target:
     """Make a target from the given command line arguments."""
     language = kwargs["language"]
-    if language == "cpp":  # GCC
+    if language == "cpp":  # G++
         return CPPTarget(**kwargs)
+    elif language == "c":  # GCC
+        return CTarget(**kwargs)
     elif language == "qiskit":  # Qiskit
         return QiskitTarget(**kwargs)
     elif language == "smt2":  # SMT solvers
@@ -59,6 +62,8 @@ def make_target_with_config(config_dict: Dict[str, Any]) -> Target:
 
     if target["language"] == "cpp":
         return CPPTarget(**target_compat_dict)
+    elif target["language"] == "c":
+        return CTarget(**target_compat_dict)
     elif target["language"] == "qiskit":
         return QiskitTarget(**target_compat_dict)
     elif target["language"] == "smt2":
