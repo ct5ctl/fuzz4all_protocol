@@ -1,240 +1,174 @@
-import glob
-import json
+"""Collect the coverage of a set of python files on some Python packages.
+
+By default it collects the coverage of all the files related to qiskit, namely
+all those in the site-packages folder starting with "qiskit".
+"""
+import multiprocessing
 import os
 import re
-import shutil
 import subprocess
 import time
 import xml.etree.ElementTree as ET
+from functools import partial
+from multiprocessing import Pool
 from typing import Any, Dict, List, Tuple
 
 import click
 import coverage
 import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
-from rich.traceback import install
-
-install()
-CURRENT_TIME = time.time()
-DEBUG = False
-
-from rich.progress import (
-    BarColumn,
-    MofNCompleteColumn,
-    Progress,
-    TextColumn,
-    TimeElapsedColumn,
-)
 
 
-def natural_sort_key(s):
-    _nsre = re.compile("([0-9]+)")
-    return [
-        int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)
-    ]
+def run_coverage(
+    python_file_path: str, timeout: int = None, verbose: bool = False
+) -> bool:
+    """Run the coverage on the python file using the coverage cmd.
 
+    It runs the command:
+    `coverage run {python_file_path}` with a timeout
+    Nota that this assumes that the environment variables are set:
+    - COVERAGE_FILE
+    - COVERAGE_RCFILE
 
-def collect_coverage_single_files(
-    folder: str, output: str, path_of_packages: str, packages_to_track: List[str]
-):
-    """Collect the coverage for each single file in the given folder."""
-    # create the output directory if it doesn't exist
-    if not os.path.exists(output):
-        os.makedirs(output)
-
-    abs_folder = os.path.abspath(folder)
-    abs_output = os.path.abspath(output)
-
-    abs_packages_to_track = [
-        os.path.join(path_of_packages, pkg) for pkg in packages_to_track
-    ]
-    abs_packages_to_track_comma = ",".join(abs_packages_to_track)
-
-    file_paths = glob.glob(folder + "/*.fuzz")
-    file_paths.sort(key=natural_sort_key)
-    abs_file_paths = [os.path.abspath(file_path) for file_path in file_paths]
-
-    print(f"Found {len(file_paths)} files to fuzz.")
-    print("e.g. ", file_paths[0], f"({abs_file_paths[0]})")
-    with Progress(
-        TextColumn("Compute coverage • [progress.percentage]{task.percentage:>3.0f}%"),
-        BarColumn(),
-        MofNCompleteColumn(),
-        TextColumn("•"),
-        TimeElapsedColumn(),
-    ) as p:
-        task = p.add_task("Coverage", total=len(abs_file_paths))
-        for file_path in abs_file_paths:
-            filename = os.path.basename(file_path)
-            # replace env var COVERAGE_FILE with the absolute path of the file followed by ".coverage"
-            cmd_compute_coverage = f"docker run -v {abs_folder}:/data_files -v {abs_output}:/coverage -e COVERAGE_FILE=/coverage/.coverage.{filename} --rm qiskit-driver coverage run --source={abs_packages_to_track_comma} /data_files/{filename}"
-            if DEBUG:
-                print(f"Running command: {cmd_compute_coverage}")
-            exit_code = subprocess.run(
-                cmd_compute_coverage,
-                shell=True,
-                encoding="utf-8",
-                text=True,
-                capture_output=True,
-            )
-            if exit_code.returncode != 0:
-                print(exit_code.stderr)
-            # increase the progress bar of 1
-            p.update(task, advance=1)
-
-
-def compute_cumulative_coverage(
-    path_coverage_dir: str, path_output_dir: str, every_n_files: int = 10
-) -> str:
-    """Compute the coverage reports at steps of n.
-
-    if n=10, then compute the coverage for the first 10 files, then for the
-    first 20 files, first 30 files, etc.
-
-    It returns the path to the cumulative coverage folder, each subfolder
-    contains a coverage report for the first n files.
+    It returns True if the command was executed successfully, False otherwise.
     """
-    coverage_files = glob.glob(path_coverage_dir + "/.coverage.*.fuzz")
-    regex = "(\d+).fuzz$"  # match the number in the name
-    sorted_coverage_files = sorted(
-        coverage_files, key=lambda x: int(re.search(regex, x).group(1))
-    )
-
-    # create a new folder cumulative in the output folder
-    cumulative_folder = path_output_dir
-    if not os.path.exists(cumulative_folder):
-        os.makedirs(cumulative_folder)
-
-    with Progress(
-        TextColumn(
-            "Compute coverage ({task.description}) • [progress.percentage]{task.percentage:>3.0f}%"
-        ),
-        BarColumn(),
-        MofNCompleteColumn(),
-        TextColumn("•"),
-        TimeElapsedColumn(),
-    ) as p:
-        split_task = p.add_task("Split in folders", total=len(sorted_coverage_files))
-        sum_task = p.add_task("Cumulative Sum", total=len(sorted_coverage_files))
-        for i, filepath in enumerate(sorted_coverage_files):
-
-            if i % every_n_files == 0:
-                # aggregate the coverage files lower than the current integer
-                # e.g. if i=0, aggregate the first file, if i=1, aggregate the first
-                # two files, etc.
-                relevant_files = sorted_coverage_files[: i + 1]
-
-                # create subfolder in cumulative folder with these files
-                subfolder = os.path.join(cumulative_folder, str(i))
-                if not os.path.exists(subfolder):
-                    os.makedirs(subfolder)
-
-                # copy the relevant files to the subfolder
-                for file in relevant_files:
-                    shutil.copy(file, subfolder)
-                p.update(split_task, advance=every_n_files)
-
-        # compute the coverage for each subfolder
-
-        subfolders = [
-            subfolder_name
-            for subfolder_name in os.listdir(cumulative_folder)
-            if os.path.isdir(os.path.join(cumulative_folder, subfolder_name))
-        ]
-        for j, subfolder_name in enumerate(subfolders):
-            # for each file combine
-            path_subfolder = os.path.join(cumulative_folder, subfolder_name)
-            abs_path_subfolder = os.path.abspath(path_subfolder)
-            abs_output_coverage_file = os.path.join(abs_path_subfolder, ".coverage")
-            # combine the coverage files in the subfolder
-            cmd_combine = f"coverage combine --data-file={abs_output_coverage_file} {abs_path_subfolder}"
-            t_start_combine = time.time()
-            if DEBUG:
-                print(f"Running command: {cmd_combine}")
-            exit_code = subprocess.run(
-                cmd_combine,
-                shell=True,
-                encoding="utf-8",
-                text=True,
-                capture_output=True,
+    # Create the command to run
+    cmd: List[str] = [
+        "coverage",
+        "run",
+        python_file_path,
+    ]
+    # Run the command
+    print(f"Running: {' '.join(cmd)}")
+    try:
+        res = subprocess.run(cmd, timeout=timeout, capture_output=True, check=True)
+        if verbose:
+            print(
+                f"{python_file_path} \n - Stdout: \n{res.stdout}, \n - Stderr: \n{res.stderr}"
             )
-            if exit_code.returncode != 0:
-                print(exit_code.stderr)
-            t_end_combine = time.time()
-            duration_combine = t_end_combine - t_start_combine
-            if DEBUG:
-                print(f"Combine took {duration_combine} seconds")
-            # JSON report - ALTERNATIVE - NOT USED
-            # json_file = os.path.join(path_subfolder, "coverage.json")
-            # abs_json_file = os.path.abspath(json_file)
-            # cmd_json = f"docker run -v {abs_output_coverage_file}:/.coverage -v {abs_path_subfolder}:/coverage --rm qiskit-driver coverage json -o /coverage/coverage.json"
+    except subprocess.TimeoutExpired as e:
+        print(f"Timeout: {e}")
+        return False
+    except Exception as e:
+        print(f"Error in subprocess run: {e}")
+        return False
+    return True
 
-            # generate the xml report
-            xml_file = os.path.join(path_subfolder, "coverage.xml")
-            abs_xml_file = os.path.abspath(xml_file)
-            cmd_xml = f"docker run -v {abs_output_coverage_file}:/.coverage -v {abs_path_subfolder}:/coverage --rm qiskit-driver coverage xml -o /coverage/coverage.xml"
-            t_start_xml = time.time()
-            # docker run -v /home/paltenmo/projects/FuzzAll/Results/qiskit_basic/test/.coverage.0.fuzz:/.coverage -v /home/paltenmo/projects/FuzzAll/Results/qiskit_basic/test:/coverage --rm qiskit-driver coverage xml -o /coverage/coverage.xml
-            if DEBUG:
-                print(f"Running command: {cmd_xml}")
-            exit_code = subprocess.run(
-                cmd_xml,  # cmd_json,  # JSON report - ALTERNATIVE - NOT USED
-                shell=True,
-                encoding="utf-8",
-                text=True,
-                capture_output=True,
+
+def run_files(
+    sorted_files: List[str],
+    data_file: str = None,
+    config_file: str = None,
+    save_coverage_every_n_files: int = None,
+    out_folder: str = None,
+    timeout: int = None,
+    verbose: bool = False,
+) -> Tuple[int, int]:
+    """Run a list of files in isolated environments.
+
+    it returns the number of files that were executed successfully and the
+    number of files that failed (e.g. timeout)
+    """
+    # run each file
+    # chunck them in groups of n
+    groups = [
+        sorted_files[i : i + save_coverage_every_n_files]
+        for i in range(0, len(sorted_files), save_coverage_every_n_files)
+    ]
+    total_success = 0
+    total_failure = 0
+    for i, group in enumerate(groups):
+        print(f"Running group {i}")
+        try:
+            # run all the files together
+            start_time = time.time()
+            # run_coverage(
+            #     python_file_path=f,
+            #     timeout=timeout
+            # )
+            # parallel version
+            n_processors = multiprocessing.cpu_count()
+            results = []
+            print(f"Using {n_processors} processors.")
+            with multiprocessing.Pool() as pool:
+                # divide the group in groups of n_processors elements
+                # e.g. if n_processors = 4 and group = [1,2,3,4,5,6,7,8,9,10]
+                # then the new_groups will be:
+                # [[1,2,3,4], [5,6,7,8], [9,10]]
+                partial_groups = [
+                    group[i : i + n_processors]
+                    for i in range(0, len(group), n_processors)
+                ]
+                for partial_group in partial_groups:
+                    print(f"Running group: {partial_group}")
+                    partial_results = pool.map(
+                        partial(run_coverage, timeout=timeout, verbose=verbose),
+                        partial_group,
+                    )
+                    # add results to the total
+                    results += partial_results
+            # count how many True (success) and False (failure)
+            n_success = sum(results)
+            n_failure = len(results) - n_success
+            total_success += n_success
+            total_failure += n_failure
+            end_time = time.time()
+            diff = end_time - start_time
+            print(f"End exec. duration {diff:.4f} seconds.")
+            print(f"Run {len(results)} files in this chunk.")
+            print(
+                f"[parallelism batch size: {n_processors} - timeout per batch:{timeout} seconds.]"
             )
-            if exit_code.returncode != 0:
-                print(exit_code.stderr)
-            t_end_xml = time.time()
-            duration_xml = t_end_xml - t_start_xml
-            if DEBUG:
-                print(f"XML took {duration_xml} seconds")
-            p.update(sum_task, advance=every_n_files)
+            print(f"Total success: {n_success}. Total failure (timeout): {n_failure}")
+        except Exception as e:
+            print(f"Error: {e}")
+        # save coverage
+        cov = coverage.Coverage(
+            data_file=data_file, data_suffix=True, config_file=config_file
+        )
+        cov.load()
+        cov.combine()
+        cov.save()
+        cov.load()
+        # create report for the last n files
+        start_val = i * save_coverage_every_n_files
+        end_val = start_val + len(group) - 1
+        xml_path = os.path.join(out_folder, f"coverage_{start_val}_{end_val}.xml")
+        try:
+            cov.xml_report(outfile=xml_path)
+        except Exception as e:
+            print(f"Error: {e}")
+    return total_success, total_failure
 
-        return cumulative_folder
 
+def create_cumulative_coverage_csv(output_folder: str):
+    """Collect the coverage from all the file and create a csv file.
 
-def create_csv(path_cumulative_folder: str, path_dir_csv_output: str) -> str:
-    """Create a csv file with the coverage information as function of files.
-
-    We assume that the cumulative folder has subfolders with structure:
-    cumulative_folder
-        0
-            .coverage
-            coverage.xml
-        10
-            .coverage
-            coverage.xml
-        20
-            .coverage
-            coverage.xml
-        ...
-
-    It returns the path to the csv file.
+    The files are:
+    - coverage_0_9.xml
+    - coverage_10_19.xml
+    - coverage_20_29.xml
+    ...
+    Each xml contains the
     """
     all_records = []
-    subfolders = [
-        subfolder_name
-        for subfolder_name in os.listdir(path_cumulative_folder)
-        if os.path.isdir(os.path.join(path_cumulative_folder, subfolder_name))
+    # use regex
+    relevant_files = [
+        os.path.join(output_folder, f)
+        for f in os.listdir(output_folder)
+        if re.match(r"coverage_\d+_\d+\.xml", f)
     ]
-    for j, subfolder_name in enumerate(subfolders):
-        path_subfolder = os.path.join(path_cumulative_folder, subfolder_name)
-        path_xml_file = os.path.join(path_subfolder, "coverage.xml")
-
+    for j, path_xml_file in enumerate(relevant_files):
         tree = ET.parse(path_xml_file)
         root = tree.getroot()
         total_coverage = float(root.attrib["line-rate"])
-        # JSON report - ALTERNATIVE - NOT USED
-        # report = json.load(open(abs_json_file))
-        # total_coverage = report["totals"]["percent_covered"]
-        n_files = int(subfolder_name)
+        interval_end = int(
+            re.search(r"coverage_\d+_(\d+)\.xml", path_xml_file).group(1)
+        )
+        n_files = interval_end + 1
         all_records.append({"n_files": n_files, "perc_total_coverage": total_coverage})
-
     df = pd.DataFrame.from_records(all_records)
-    output_csv = os.path.join(path_dir_csv_output, "cumulative_coverage.csv")
+    output_csv = os.path.join(output_folder, "cumulative_coverage.csv")
     df.to_csv(output_csv, index=False)
     return output_csv
 
@@ -249,98 +183,147 @@ def plot_data(path_csv: str, path_output: str):
 
 @click.command()
 @click.option(
-    "--folder",
-    "-f",
-    default=".",
-    help="The folder containing the python files to compute coverage for.",
+    "--target-folder",
+    "-t",
+    help="The folder containing the files to cover.",
 )
 @click.option(
-    "--output",
+    "--output-folder",
     "-o",
-    default="coverage",
-    help="The folder to save the coverage to.",
+    help="The folder where to save the coverage info.",
 )
 @click.option(
     "--every-n-files",
     "-n",
-    default=10,
-    help="The number of files to aggregate in each step.",
+    default=1,
+    help="Collect coverage info every n files.",
 )
 @click.option(
-    "--path-of-packages",
-    "-pp",
-    default="/opt/conda/envs/fuzz-everything/lib/python3.10/site-packages",
-    help="The general python path pointing to external packages (site-packages).",
+    "--timeout",
+    "-to",
+    default=10,
+    help="Timeout for each file (in seconds).",
+)
+@click.option(
+    "--file-extension",
+    "-fe",
+    default=".fuzz",
+    help="The suffix of the files to cover.",
 )
 @click.option(
     "--packages-to-track",
     "-p",
+    default=None,
     multiple=True,
-    default=[
-        "qiskit",
-        "qiskit_terra-0.43.1.dist-info",
-        "qiskit_aer",
-        "qiskit_aer-0.12.0.dist-info",
-        "qiskit_aer.libs",
-        "qiskit_ibmq_provider-0.20.2.dist-info",
-        "qiskit_terra-0.24.1.dist-info",
-    ],
-    help="The specific packages to compute coverage for.",
+    help="The packages to track in the site-packages folder (use relative names, e.g. qiskit_aer).",
 )
 @click.option(
-    "--create-plot",
-    "-p",
-    default=True,
-    help="Whether to create a plot of the coverage.",
+    "--verbose",
+    "-v",
+    default=False,
+    help="Print more info (such as the output of the programs, increase the timeout because the printout slows the execution).",
 )
-def collect_coverage(
-    folder: str,
-    output: str,
+def main(
+    target_folder: str,
+    output_folder: str,
     every_n_files: int,
-    path_of_packages: str,
+    timeout: int,
+    file_extension: str,
     packages_to_track: List[str],
-    create_plot: bool,
+    verbose: bool,
 ):
-    """Collect the coverage of the given folder and save it to the given output
-    directory.
+    """Collect the coverage info for all packages starting with "qiskit"."""
+    # create the output folder
+    os.makedirs(output_folder, exist_ok=True)
+    data_file = os.path.join(output_folder, ".mycoverage")
+    abs_data_file = os.path.abspath(data_file)
+    # get the site-packages directory
+    site_packages = os.path.dirname(os.path.dirname(coverage.__file__))
+    print(f"Packages to track: {packages_to_track}")
+    if len(packages_to_track) == 0:
+        print("expected qiskit packages.")
+        # get all the folders starting with "qiskit"
+        qiskit_folders = [
+            os.path.join(site_packages, f)
+            for f in os.listdir(site_packages)
+            if f.startswith("qiskit")
+        ]
+        packages_to_track = qiskit_folders
+    else:
+        # add the site-packages folder prefix to the packages_to_track
+        packages_to_track = [os.path.join(site_packages, f) for f in packages_to_track]
+    list_of_packages = "\n    ".join(packages_to_track)
+    print("Packages to track:")
+    for f in packages_to_track:
+        print(f)
+    concatenated_packages = ",".join(packages_to_track)
+    config_file_content = f"""
+[run]
+branch = True
+concurrency = multiprocessing
+parallel = True
+source =
+    {list_of_packages}
 
-    The output directory must be empty.
-    """
+# {concatenated_packages}
+"""
+    # create the .coveragerc file
+    config_file_path = os.path.join(output_folder, ".coveragerc")
+    with open(config_file_path, "w") as f:
+        f.write(config_file_content)
+    abs_config_file_path = os.path.abspath(config_file_path)
 
-    # proceed only if the output directory is empty
-    if os.path.exists(output):
-        if len(os.listdir(output)) != 0:
-            print(f"The output directory is not empty: {output}")
-            return
+    # set the two as environment variables
+    os.environ["COVERAGE_FILE"] = abs_data_file
+    os.environ["COVERAGE_RCFILE"] = abs_config_file_path
 
-    path_single_file_coverage = os.path.join(output, "single_file_coverage")
-
-    collect_coverage_single_files(
-        folder=folder,
-        output=path_single_file_coverage,
-        path_of_packages=path_of_packages,
-        packages_to_track=packages_to_track,
+    # get all files starting with "to_run"
+    files = [
+        os.path.join(target_folder, f)
+        for f in os.listdir(target_folder)
+        if f.endswith(file_extension)
+    ]
+    # filenames
+    # 1.fuzz
+    # 2.fuzz
+    # 3.fuzz
+    # ...
+    # 10.fuzz
+    sorted_files = sorted(
+        files, key=lambda x: int(re.search(r"(\d+)\.fuzz", x).group(1))
     )
 
-    path_cumulative_folder = os.path.join(output, "cumulative_coverage")
+    # list of files to run
+    for f in sorted_files:
+        print(f)
 
-    compute_cumulative_coverage(
-        path_coverage_dir=path_single_file_coverage,
-        path_output_dir=path_cumulative_folder,
-        every_n_files=every_n_files,
+    # run the files
+    total_success, total_failure = run_files(
+        sorted_files=sorted_files,
+        data_file=abs_data_file,
+        config_file=abs_config_file_path,
+        save_coverage_every_n_files=every_n_files,
+        out_folder=output_folder,
+        timeout=timeout,
+        verbose=verbose,
     )
+    print("-" * 80)
+    print(f"Total success: {total_success}. Total failure (timeout): {total_failure}")
 
-    path_csv = create_csv(
-        path_cumulative_folder=path_cumulative_folder,
-        path_dir_csv_output=output,
+    cov = coverage.Coverage(
+        data_file=abs_data_file, data_suffix=True, config_file=abs_config_file_path
     )
+    cov.load()
+    cov.combine()
+    cov.save()
+    cov.load()
+    # save file as xml
+    xml_path = os.path.join(output_folder, "coverage_final.xml")
+    cov.xml_report(outfile=xml_path)
 
-    if create_plot:
-        plot_data(
-            path_csv=path_csv,
-            path_output=output,
-        )
+    path_csv = create_cumulative_coverage_csv(output_folder)
+    plot_data(path_csv, output_folder)
 
 
 if __name__ == "__main__":
-    collect_coverage()
+    main()
