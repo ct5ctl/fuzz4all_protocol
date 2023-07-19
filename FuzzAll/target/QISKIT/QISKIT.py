@@ -24,17 +24,19 @@ class Snippet(Enum):
     READ_ANY_QASM_SAME_FOLDER = """
 from qiskit import QuantumCircuit
 import glob
-
+class CustomFuzzAllException(Exception):
+    pass
 qasm_files = glob.glob("*.qasm")
 for qasm_file in qasm_files:
-    print(f"Importing {qasm_file} - MAGIC_STRING_THE_SCRIPT_EXECUTES_MY_QASM_IMPORTS")
     try:
+        print(f"Importing {qasm_file}")
         qc = QuantumCircuit.from_qasm_file(qasm_file)
     except Exception as e:
         print(f"Exception: {e}")
         print(f"File: {qasm_file}")
         content = open(qasm_file, "r").read()
         print(f"Content: {content}")
+        raise CustomFuzzAllException(e)
     """
     CHECK_ANY_CIRCUIT = """
 # ==================== ORACLE ====================
@@ -366,11 +368,8 @@ class QiskitTarget(Target):
             if exit_code.returncode == 0:
                 return FResult.SAFE, "its safe"
             else:
-                # check if the output contained a QasmError
-                # and if the code from the snippet was executed
-                clue = "MAGIC_STRING_THE_SCRIPT_EXECUTES_MY_QASM_IMPORTS"
-                if "QasmError" in exit_code.stderr and clue in exit_code.stdout:
-                    return FResult.ERROR, "qasm error: POTENTIAL BUG"
+                if "CustomFuzzAllException" in exit_code.stderr:
+                    return FResult.ERROR, "CustomFuzzAllException: POTENTIAL BUG"
                 else:
                     return FResult.FAILURE, exit_code.stderr
         except ValueError as e:
