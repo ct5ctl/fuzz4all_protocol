@@ -1,9 +1,3 @@
-There is a builder interface for the new control-flow operations on QuantumCircuit, such as the new ForLoopOp, IfElseOp, and WhileLoopOp. The interface uses the same circuit methods, i.e. QuantumCircuit.for_loop(), QuantumCircuit.if_test() and QuantumCircuit.while_loop(), which are overloaded so that if the body parameter is not given, they return a context manager. Entering one of these context managers pushes a scope into the circuit, and captures all gate calls (and other scopes) and the resources these use, and builds up the relevant operation at the end. For example, you can now do:
-
-qc = QuantumCircuit(2, 2)
-with qc.for_loop(range(5)) as i:
-    qc.rx(i * math.pi / 4, 0)
-
 qiskit.circuit.QuantumCircuit.for_loop¶
 QuantumCircuit.for_loop(indexset: Iterable[int], loop_parameter: Parameter | None, body: None, qubits: None, clbits: None, *, label: str | None)→ qiskit.circuit.controlflow.for_loop.ForLoopContext[SOURCE]¶
 QuantumCircuit.for_loop(indexset: Iterable[int], loop_parameter: Parameter | None, body: QuantumCircuit, qubits: Sequence[Qubit | QuantumRegister | int | slice | Sequence[Qubit | int]], clbits: Sequence[Clbit | ClassicalRegister | int | slice | Sequence[Clbit | int]], *, label: str | None)→ InstructionSet
