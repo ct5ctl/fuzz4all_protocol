@@ -99,7 +99,7 @@ def fuzz(
 
 # evaluate against the oracle to discover any potential bugs
 # used after the generation
-def evaluate(target: Target):
+def evaluate_all(target: Target):
     target.validate_all()
 
 
@@ -284,7 +284,7 @@ def main_with_config(ctx, folder):
             otf=fuzzing["otf"],
         )
     else:
-        evaluate(target)
+        evaluate_all(target)
 
 
 if __name__ == "__main__":
