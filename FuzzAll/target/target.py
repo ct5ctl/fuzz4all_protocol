@@ -355,7 +355,7 @@ class Target(object):
                 and self.clean_code(code) != self.prev_example
             ):
                 new_code = self.clean_code(code)
-        if new_code != "":
+        if new_code != "" and self.p_strategy != -1:
             self.prompt = (
                 self.initial_prompt
                 + self.update_strategy(new_code)
