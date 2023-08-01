@@ -432,7 +432,7 @@ func (v *Value) Store(val any)
 func (v *Value) Swap(new any) (old any)
     """,
     "separator": "// Please create a very short program which combines atomic with other go features in a complex way",
-    "begin": 'package main\nimport (\n\t"sync/atomic"\n)\n',
+    "begin": 'package main\nimport (\n\t"sync/atomic"\n',
     "target_api": "atomic",
 }
 
@@ -1168,7 +1168,7 @@ func (i RoundingMode) String() string
 type Word
 """,
     "separator": "// Please create a very short program which combines big math with other go features in a complex way",
-    "begin": 'package main\nimport (\n\t"math/big"\n)\n',
+    "begin": 'package main\nimport (\n\t"math/big"\n',
     "target_api": "big",
 }
 
@@ -1232,6 +1232,6 @@ The Interface type describes the requirements for a type using the routines in t
 Note that Push and Pop in this interface are for package heap's implementation to call. To add and remove things from the heap, use heap.Push and heap.Pop.
 """,
     "separator": "// Please create a very short program which combines heap with other go features in a complex way",
-    "begin": 'package main\nimport (\n\t"container/heap"\n)\n',
+    "begin": 'package main\nimport (\n\t"container/heap"\n',
     "target_api": "heap",
 }

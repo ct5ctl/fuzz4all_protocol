@@ -133,45 +133,6 @@ class CPPTarget(Target):
         )
         return code
 
-    def validate_compiler_with_opt(self, compiler, filename) -> (FResult, str):
-
-        base_result, base_message = self.validate_compiler(compiler, filename)
-        if base_result == FResult.TIMED_OUT:
-            return base_result, base_message
-
-        results = [base_result]
-        messages = [f"base\n{base_message}"]
-
-        for opt in ["-O3", "-O2", "-O1"]:
-            try:
-                exit_code = subprocess.run(
-                    f"{compiler} -std={MOST_RECENT_GCC_STD_VERSION} -x c++ {opt} {filename} -o /tmp/out{self.CURRENT_TIME}",
-                    shell=True,
-                    capture_output=True,
-                    encoding="utf-8",
-                    timeout=5,
-                    text=True,
-                )
-            except subprocess.TimeoutExpired:
-                results.append(FResult.TIMED_OUT)
-                messages.append(f"Optimization {opt} Timeout")
-                continue
-            if exit_code.returncode == 0:
-                results.append(FResult.SAFE)
-                messages.append(f"Optimization {opt} is safe")
-            elif exit_code.returncode != 0:
-                results.append(FResult.FAILURE)
-                messages.append(f"Optimization {opt}:\n{exit_code.stderr}")
-
-        if (
-            FResult.ERROR in results or FResult.FAILURE in results
-        ) and FResult.SAFE in results:
-            return FResult.ERROR, "leading to incorrect optimization!" + "\n".join(
-                messages
-            )
-
-        return base_result, "\n".join(messages)
-
     def validate_compiler(self, compiler, filename) -> (FResult, str):
         # check without -c option (+ linking)
         try:
@@ -237,38 +198,3 @@ class CPPTarget(Target):
             return FResult.FAILURE, f"gcc: {gcc_msg}\nclang:{clang_msg}"
         else:
             return FResult.TIMED_OUT, f"both timed out"
-
-    def check_syntax_valid(self, code):
-        with open("/tmp/temp{}.cpp".format(self.CURRENT_TIME), "w") as f:
-            f.write(code)
-        try:
-            exit_code = subprocess.run(
-                "g++ -std={} -c -fsyntax-only {}".format(
-                    MOST_RECENT_GCC_STD_VERSION,
-                    "/tmp/temp{}.cpp".format(self.CURRENT_TIME),
-                ),
-                shell=True,
-                capture_output=True,
-                text=True,
-                timeout=5,
-            )
-            if exit_code.returncode == 0:
-                return True
-            else:
-                print(exit_code.stderr)
-                return False
-        except subprocess.TimeoutExpired as te:
-            pname = "'temp{}.cpp'".format(self.CURRENT_TIME)
-            subprocess.run(
-                ["ps -ef | grep " + pname + " | grep -v grep | awk '{print $2}'"],
-                shell=True,
-            )
-            subprocess.run(
-                [
-                    "ps -ef | grep "
-                    + pname
-                    + " | grep -v grep | awk '{print $2}' | xargs -r kill -9"
-                ],
-                shell=True,
-            )  # kill all tests thank you
-            return False

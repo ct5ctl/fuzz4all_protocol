@@ -57,7 +57,7 @@ Actions prior to calling CyclicBarrier.await and Phaser.awaitAdvance (as well as
 
 java_std = {
     "docstring": """
-ava® Platform, Standard Edition & Java Development Kit
+Java® Platform, Standard Edition & Java Development Kit
 Version 20 API Specification
 This document is divided into two sections:
 

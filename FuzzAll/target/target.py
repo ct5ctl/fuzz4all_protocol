@@ -109,12 +109,6 @@ class Target(object):
         }
         return dict_compat
 
-    # used for fuzzing to check valid syntax
-    def check_syntax_valid(self, code: str) -> bool:
-        # by default return true as there might not be need for syntax check
-        # however such check might be beneficial.
-        return True
-
     def write_back_file(self, code: str):
         raise NotImplementedError
 
