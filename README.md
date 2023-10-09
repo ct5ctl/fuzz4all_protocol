@@ -30,6 +30,9 @@ Copy one of them in the root directory and rename it `.env`.
 
 You can run the approach either passing the arguments directly to the script or by using a configuration file.
 
+Note that you need to be logged into HuggingFace and have access to `bigcode/starcoderbase` to use the language model
+(for both cached locally or from HuggingFace directly)
+
 #### Arguments
 
 ```shell
