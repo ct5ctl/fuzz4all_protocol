@@ -1,7 +1,4 @@
-# https://qiskit.org/documentation/apidoc/terra.html
-# Accessed 2023-07-14
-
-Qiskit Terra API Reference¶
+Qiskit Terra API Reference
 Quantum Circuits (qiskit.circuit)
 Circuit Library (qiskit.circuit.library)
 Compilation Routines (qiskit.compiler)

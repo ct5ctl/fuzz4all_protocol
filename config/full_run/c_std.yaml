@@ -8,7 +8,7 @@ fuzzing:
   # number of fuzzing iterations
   num: 60000
   # total fuzzing time in hours
-  total_time: 18
+  total_time: 24
   # level of logging: 1 = INFO, 2 = TRACE, 3 = VERBOSE
   log_level: 3
   # use to validate fuzzing outputs on the fly.
