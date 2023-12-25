@@ -3,10 +3,8 @@
 # --------------------------------------------------------------------------- #
 # Configuration of the overall fuzzing setup
 fuzzing:
-  # # where to store the results (relative to the fuzz.py script)
-  # output_folder: Results/qiskit/v04_untargetted_metamorphic
   # number of fuzzing iterations
-  num: 100000
+  num: 10000
   # total fuzzing time in hours
   total_time: 24
   # level of logging: 1 = INFO, 2 = TRACE, 3 = VERBOSE
@@ -30,53 +28,45 @@ fuzzing:
   # 1: mutate existing code
   # 2: semantically equivalent code generation
   # 3: combine previous two code generations
-  prompt_strategy: 0
-
+  prompt_strategy: 2
 
 
 # --------------------------------------------------------------------------- #
 # Configuration of the target system
 target:
   # language to fuzz, currently supported: cpp, smt2, java, go
-  language: qiskit
+  language: go
   # path to documentation of the feature of the target system
   # (Relative to the root of the fuzzing framework)
-  path_documentation: config/documentation/qiskit/qiskit_std.md
+  path_documentation: config/documentation/go/go_big.md
   # path to the example code using the feature of the target system
   # (Relative to the root of the fuzzing framework)
   path_example_code:
   # path to the command to push the llm to generate the input for the
   # target system using the given feature
-  trigger_to_generate_input: "'''Create quantum circuits with Qiskit API and combine them in complex ways.'''"
+  trigger_to_generate_input: "// Please create a very short program which combines big math with other go features in a complex way"
   # hint to give to the llm to generate the input for the target system
-  input_hint: "from qiskit import QuantumCircuit\n"
+  input_hint: 'package main\nimport (\n\t"math/big"\n'
   # path to the hand-written prompt to give to the llm
   # (Relative to the root of the fuzzing framework)
   path_hand_written_prompt:
   # string to check if the generated input is valid. If the string is present
   # in the generated input, the input is considered valid.
-  target_string: "QuantumCircuit"  # always true
-  # which oracle to use (this option is working only for certain targets)
-  # - crash: check if the target system crashes
-  # - diff: check if the output of the target system is different from the
-  #         output of the reference system
-  # - metamorphic: check if the output of the target system is different from
-  #                the output of the reference system, but the difference is
-  #                due to a metamorphic relation
-  oracle: opt_and_qasm
-
+  target_string: "big"
 
 
 # --------------------------------------------------------------------------- #
 # Configuration of the Large Language Model (LLM) setup
 llm:
-  # temperature to query the LLM model when generating llm output.
+  # temperature to query the LLM model when generating output.
   temperature: 1
   # batch size
   batch_size: 30
   # use hardware acceleration (GPU) for the LLM model
   device: cuda
   # model name according to the HuggingFace model hub
+  # note that you can also export your cache such as this:
+  # export TRANSFORMERS_CACHE=/blabla/cache/
   model_name: bigcode/starcoderbase
   # local model folder (absolute path)
   # if not set, the model will be downloaded from the HuggingFace model hub

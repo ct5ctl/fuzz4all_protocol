@@ -3,8 +3,6 @@
 # --------------------------------------------------------------------------- #
 # Configuration of the overall fuzzing setup
 fuzzing:
-  # where to store the results (relative to the where you are calling fuzz.py)
-  output_folder: ../fastd/fuzzall/FuzzAll/experiment/full_run/cpp/run
   # number of fuzzing iterations
   num: 10000
   # total fuzzing time in hours
@@ -37,24 +35,24 @@ fuzzing:
 # Configuration of the target system
 target:
   # language to fuzz, currently supported: cpp, smt2, java, go
-  language: c
+  language: go
   # path to documentation of the feature of the target system
   # (Relative to the root of the fuzzing framework)
-  path_documentation: config/documentation/c/c_inline.md
+  path_documentation: config/documentation/go/go_atomic.md
   # path to the example code using the feature of the target system
   # (Relative to the root of the fuzzing framework)
   path_example_code:
   # path to the command to push the llm to generate the input for the
   # target system using the given feature
-  trigger_to_generate_input: "/* Please create a short program which combines inline with new C features in a complex way */"
+  trigger_to_generate_input: "// Please create a very short program which combines atomic with other go features in a complex way"
   # hint to give to the llm to generate the input for the target system
-  input_hint: "#include <stdlib.h>"
+  input_hint: 'package main\nimport (\n\t"sync/atomic"\n'
   # path to the hand-written prompt to give to the llm
   # (Relative to the root of the fuzzing framework)
   path_hand_written_prompt:
   # string to check if the generated input is valid. If the string is present
   # in the generated input, the input is considered valid.
-  target_string: "inline"
+  target_string: "atomic"
 
 
 # --------------------------------------------------------------------------- #
