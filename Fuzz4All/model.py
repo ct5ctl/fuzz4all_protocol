@@ -1,21 +1,13 @@
 import os
-from enum import IntEnum
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
-from dotenv import load_dotenv
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     StoppingCriteria,
     StoppingCriteriaList,
 )
-
-# load the environment variable to use either a custom
-# HF_HOME or a custom HUGGING_FACE_HUB_TOKEN
-dotenv_path = Path(__file__).parent.resolve() / "../.env"
-load_dotenv(dotenv_path=dotenv_path)
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # disable warning
 EOF_STRINGS = ["<|endoftext|>", "###"]

@@ -4,17 +4,9 @@ from typing import List, Union
 
 import torch
 
-from FuzzAll.target.SMT.template import (
-    smt2_auflia,
-    smt2_general,
-    smt2_lia,
-    smt2_lia_example,
-    smt2_lia_example_doc,
-    smt2_lra,
-)
-from FuzzAll.target.target import FResult, Target
-from FuzzAll.util.Logger import LEVEL
-from FuzzAll.util.util import comment_remover
+from Fuzz4All.target.target import FResult, Target
+from Fuzz4All.util.Logger import LEVEL
+from Fuzz4All.util.util import comment_remover
 
 
 def _check_sat(stdout):
@@ -66,18 +58,6 @@ class SMTTarget(Target):
             config_dict = kwargs["config_dict"]
             self.prompt_used = self._create_prompt_from_config(config_dict)
             self.config_dict = config_dict
-        elif kwargs["template"] == "smt2_lia":
-            self.prompt_used = smt2_lia
-        elif kwargs["template"] == "smt2_lia_example":
-            self.prompt_used = smt2_lia_example
-        elif kwargs["template"] == "smt2_lia_example_doc":
-            self.prompt_used = smt2_lia_example_doc
-        elif kwargs["template"] == "smt2_auflia":
-            self.prompt_used = smt2_auflia
-        elif kwargs["template"] == "smt2_lra":
-            self.prompt_used = smt2_lra
-        elif kwargs["template"] == "smt2_general":
-            self.prompt_used = smt2_general
         else:
             raise NotImplementedError
 

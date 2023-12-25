@@ -1,16 +1,4 @@
-"""Main script to run the fuzzing process.
-
-Usage:
-1. Use with config file (from the main repo folder):
-    python FuzzAll/fuzz.py --config=<config_file> main_with_config --folder output_folder
-    e.g. python FuzzAll/fuzz.py --config=config/v02_qiskit_basic.yaml main_with_config --folder /tmp/fuzzing_output
-2. Use with command line arguments (from the main repo folder):
-    python FuzzAll/fuzz.py main \
-    --language=cpp --num=10 --otf --level=1 \
-    --template=cpp_expected \
-    --bs=1 --temperature=1.0 --prompt_strategy=0 --use_hw
-
-"""
+"""Main script to run the fuzzing process."""
 
 import os
 import time
@@ -129,13 +117,20 @@ def cli(ctx, config_file):
     default="Results/test",
     help="folder to store results",
 )
-def main_with_config(ctx, folder):
+@click.option(
+    "cpu",
+    "--cpu",
+    is_flag=True,
+    help="to use cpu",  # this is for GPU resource low situations where only cpu is available
+)
+def main_with_config(ctx, folder, cpu):
     """Run the main using a configuration file."""
     config_dict = ctx.obj["CONFIG_DICT"]
-
-    print(config_dict)
     fuzzing = config_dict["fuzzing"]
     config_dict["fuzzing"]["output_folder"] = folder
+    if cpu:
+        config_dict["llm"]["device"] = "cpu"
+    print(config_dict)
 
     target = make_target_with_config(config_dict)
     if not fuzzing["evaluate"]:

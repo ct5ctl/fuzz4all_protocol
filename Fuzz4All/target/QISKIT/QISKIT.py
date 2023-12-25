@@ -7,13 +7,6 @@ from multiprocessing import Process
 from threading import Timer
 from typing import List, Tuple, Union
 
-# TODO: fix template to within their own folder, kinda of like a dump folder for user
-from Fuzz4All.target.QISKIT.template import (
-    qiskit_basic,
-    qiskit_hw_qasm,
-    qiskit_hw_transpile,
-    qiskit_parameter,
-)
 from Fuzz4All.target.target import FResult, Target
 from Fuzz4All.util.Logger import LEVEL
 
@@ -93,14 +86,6 @@ class QiskitTarget(Target):
             config_dict = kwargs["config_dict"]
             self.prompt_used = self._create_prompt_from_config(config_dict)
             self.config_dict = config_dict
-        elif kwargs["template"] == "qiskit_parameter":
-            self.prompt_used = qiskit_parameter
-        elif kwargs["template"] == "qiskit_basic":
-            self.prompt_used = qiskit_basic
-        elif kwargs["template"] == "qiskit_hw_qasm":
-            self.prompt_used = qiskit_hw_qasm
-        elif kwargs["template"] == "qiskit_hw_transpile":
-            self.prompt_used = qiskit_hw_transpile
         else:
             raise NotImplementedError
 

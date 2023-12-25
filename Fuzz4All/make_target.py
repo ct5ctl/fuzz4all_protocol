@@ -1,12 +1,12 @@
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from FuzzAll.target.C.C import CTarget
-from FuzzAll.target.CPP.CPP import CPPTarget
-from FuzzAll.target.GO.GO import GOTarget
-from FuzzAll.target.JAVA.JAVA import JAVATarget
-from FuzzAll.target.QISKIT.QISKIT import QiskitTarget
-from FuzzAll.target.SMT.SMT import SMTTarget
-from FuzzAll.target.target import Target
+from Fuzz4All.target.C.C import CTarget
+from Fuzz4All.target.CPP.CPP import CPPTarget
+from Fuzz4All.target.GO.GO import GOTarget
+from Fuzz4All.target.JAVA.JAVA import JAVATarget
+from Fuzz4All.target.QISKIT.QISKIT import QiskitTarget
+from Fuzz4All.target.SMT.SMT import SMTTarget
+from Fuzz4All.target.target import Target
 
 
 def make_target(kwargs: Dict[str, Any]) -> Target:

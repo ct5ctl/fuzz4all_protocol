@@ -5,7 +5,6 @@ from pathlib import Path
 from re import search
 from typing import List, Union
 
-from Fuzz4All.target.JAVA.template import java_concurrent, java_std, java_text
 from Fuzz4All.target.target import FResult, Target
 from Fuzz4All.util.Logger import LEVEL
 from Fuzz4All.util.util import comment_remover
@@ -18,12 +17,6 @@ class JAVATarget(Target):
             config_dict = kwargs["config_dict"]
             self.prompt_used = self._create_prompt_from_config(config_dict)
             self.config_dict = config_dict
-        elif kwargs["template"] == "java_text":
-            self.prompt_used = java_text
-        elif kwargs["template"] == "java_concurrent":
-            self.prompt_used = java_concurrent
-        elif kwargs["template"] == "java_std":
-            self.prompt_used = java_std
         else:
             raise NotImplementedError
 
