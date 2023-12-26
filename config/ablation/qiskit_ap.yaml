@@ -41,10 +41,10 @@ target:
   language: qiskit
   # path to documentation of the feature of the target system
   # (Relative to the root of the fuzzing framework)
-  path_documentation: config/documentation/qiskit/v04_api_reference.md
+  path_documentation: config/documentation/qiskit/qiskit_std.md
   # path to the example code using the feature of the target system
   # (Relative to the root of the fuzzing framework)
-  path_example_code: config/example_code/qiskit/v02_basic.py
+  path_example_code:
   # path to the command to push the llm to generate the input for the
   # target system using the given feature
   trigger_to_generate_input: "'''Create quantum circuits with Qiskit API and combine them in complex ways.'''"
@@ -52,7 +52,7 @@ target:
   input_hint: "from qiskit import QuantumCircuit\n"
   # path to the hand-written prompt to give to the llm
   # (Relative to the root of the fuzzing framework)
-  path_hand_written_prompt: config/documentation/qiskit/v04_api_reference.md
+  path_hand_written_prompt: config/documentation/qiskit/qiskit_std.md
   # string to check if the generated input is valid. If the string is present
   # in the generated input, the input is considered valid.
   target_string: "QuantumCircuit"  # always true
