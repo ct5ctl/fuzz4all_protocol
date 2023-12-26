@@ -162,17 +162,14 @@ class CTarget(Target):
         return FResult.SAFE, "its safe"
 
     def validate_individual(self, filename) -> (FResult, str):
-        gcc_fresult, gcc_msg = self.validate_compiler("gcc", filename)
-        clang_fresult, clang_msg = self.validate_compiler("clang", filename)
-        if gcc_fresult == FResult.SAFE and clang_fresult == FResult.SAFE:
+        fresult, msg = self.validate_compiler(self.target_name, filename)
+        if fresult == FResult.SAFE:
             return FResult.SAFE, "its safe"
-        elif gcc_fresult == FResult.ERROR or clang_fresult == FResult.ERROR:
-            return FResult.ERROR, f"gcc: {gcc_msg}\nclang:{clang_msg}"
-        elif gcc_fresult != FResult.TIMED_OUT and clang_fresult == FResult.TIMED_OUT:
-            return FResult.ERROR, f"clang timed out but gcc was fine"
-        elif gcc_fresult == FResult.TIMED_OUT and clang_fresult != FResult.TIMED_OUT:
-            return FResult.ERROR, f"gcc timed out but clang was fine"
-        elif gcc_fresult == FResult.FAILURE or clang_fresult == FResult.FAILURE:
-            return FResult.FAILURE, f"gcc: {gcc_msg}\nclang:{clang_msg}"
+        elif fresult == FResult.ERROR:
+            return FResult.ERROR, f"{msg}"
+        elif fresult == FResult.TIMED_OUT:
+            return FResult.ERROR, "timed out"
+        elif fresult == FResult.FAILURE:
+            return FResult.FAILURE, f"{msg}"
         else:
-            return FResult.TIMED_OUT, f"both timed out"
+            return (FResult.TIMED_OUT,)

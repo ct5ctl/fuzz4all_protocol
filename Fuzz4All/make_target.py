@@ -52,6 +52,7 @@ def make_target_with_config(config_dict: Dict[str, Any]) -> Target:
         # signalling the target to use the config file
         "template": "fuzzing_with_config_file",
         "config_dict": config_dict,
+        "target_name": fuzzing.get("target_name", "target"),
     }
 
     # print the target config

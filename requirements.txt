@@ -7,3 +7,4 @@ transformers
 python-dotenv
 click
 PyYAML
+qiskit==0.43.1

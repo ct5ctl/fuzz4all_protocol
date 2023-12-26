@@ -5,6 +5,7 @@ import time
 import openai
 
 openai.api_key = os.environ.get("OPENAI_API_KEY", "dummy")
+client = openai.OpenAI()
 
 
 def create_openai_config(
@@ -58,17 +59,17 @@ def request_engine(config):
         try:
             signal.signal(signal.SIGALRM, handler)
             signal.alarm(120)  # wait 10
-            ret = openai.ChatCompletion.create(**config)
+            ret = client.chat.completions.create(**config)
             signal.alarm(0)
-        except openai.error.InvalidRequestError as e:
+        except openai._exceptions.BadRequestError as e:
             print(e)
             signal.alarm(0)
-        except openai.error.RateLimitError as e:
+        except openai._exceptions.RateLimitError as e:
             print("Rate limit exceeded. Waiting...")
             print(e)
             signal.alarm(0)  # cancel alarm
             time.sleep(5)
-        except openai.error.APIConnectionError as e:
+        except openai._exceptions.APIConnectionError as e:
             print("API connection error. Waiting...")
             signal.alarm(0)  # cancel alarm
             time.sleep(5)

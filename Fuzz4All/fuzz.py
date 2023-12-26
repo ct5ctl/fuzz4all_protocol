@@ -123,13 +123,31 @@ def cli(ctx, config_file):
     is_flag=True,
     help="to use cpu",  # this is for GPU resource low situations where only cpu is available
 )
-def main_with_config(ctx, folder, cpu):
+@click.option(
+    "batch_size",
+    "--batch_size",
+    type=int,
+    default=30,
+    help="batch size for the model",
+)
+@click.option(
+    "target",
+    "--target",
+    type=str,
+    default="",
+    help="specific target to run",
+)
+def main_with_config(ctx, folder, cpu, batch_size, target):
     """Run the main using a configuration file."""
     config_dict = ctx.obj["CONFIG_DICT"]
     fuzzing = config_dict["fuzzing"]
     config_dict["fuzzing"]["output_folder"] = folder
     if cpu:
         config_dict["llm"]["device"] = "cpu"
+    if batch_size:
+        config_dict["llm"]["batch_size"] = batch_size
+    if target != "":
+        config_dict["fuzzing"]["target_name"] = target
     print(config_dict)
 
     target = make_target_with_config(config_dict)

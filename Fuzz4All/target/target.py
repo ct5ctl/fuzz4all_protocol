@@ -79,6 +79,8 @@ class Target(object):
         self.special_eos = None
         if "model_name" in kwargs:
             self.model_name = kwargs["model_name"]
+        if "target_name" in kwargs:
+            self.target_name = kwargs["target_name"]
 
     @staticmethod
     def _create_prompt_from_config(config_dict: Dict[str, Any]) -> Dict:
@@ -180,9 +182,7 @@ class Target(object):
                 model="gpt-4",
             )
             response = request_engine(config)
-            greedy_prompt = self.wrap_prompt(
-                response["choices"][0]["message"]["content"]
-            )
+            greedy_prompt = self.wrap_prompt(response.choices[0].message.content)
             with open(
                 self.folder + "/prompts/greedy_prompt.txt", "w", encoding="utf-8"
             ) as f:
@@ -201,7 +201,7 @@ class Target(object):
                     model="gpt-4",
                 )
                 response = request_engine(config)
-                prompt = self.wrap_prompt(response["choices"][0]["message"]["content"])
+                prompt = self.wrap_prompt(response.choices[0].message.content)
                 with open(
                     self.folder + "/prompts/prompt_{}.txt".format(i),
                     "w",
@@ -264,21 +264,6 @@ class Target(object):
         )
         self.prompt = self.initial_prompt
         self.m_logger.logo("Done", level=LEVEL.INFO)
-
-    def generate_chatgpt(self) -> List[str]:
-        messages = create_chatgpt_docstring_template(
-            self.SYSTEM_MESSAGE,
-            self.prompt_used["separator"],
-            self.prompt_used["docstring"],
-            self.prompt_used["example_code"],
-            "",
-        )
-        config = create_config(
-            prev={}, messages=messages, max_tokens=512, temperature=1.3
-        )
-        ret = request_engine(config)
-        func = comment_remover(simple_parse(ret["choices"][0]["message"]["content"]))
-        return [func]
 
     def generate_model(self) -> List[str]:
         self.g_logger.logo(self.prompt, level=LEVEL.VERBOSE)

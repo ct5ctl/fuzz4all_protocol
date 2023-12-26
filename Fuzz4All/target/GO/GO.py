@@ -65,7 +65,7 @@ class GOTarget(Target):
         self.write_back_file(code)
         try:
             exit_code = subprocess.run(
-                f"go build -o /tmp/temp{self.CURRENT_TIME} /tmp/temp{self.CURRENT_TIME}.go",
+                f"{self.target_name} build -o /tmp/temp{self.CURRENT_TIME} /tmp/temp{self.CURRENT_TIME}.go",
                 shell=True,
                 capture_output=True,
                 encoding="utf-8",

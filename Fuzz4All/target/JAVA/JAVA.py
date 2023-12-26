@@ -84,7 +84,7 @@ class JAVATarget(Target):
 
         try:
             exit_code = subprocess.run(
-                f"javac --source 22 --enable-preview --target 22 {write_back_name}",
+                f"{self.target_name} --source 22 --enable-preview --target 22 {write_back_name}",
                 shell=True,
                 capture_output=True,
                 encoding="utf-8",

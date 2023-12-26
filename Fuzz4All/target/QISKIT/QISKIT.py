@@ -251,16 +251,12 @@ class QiskitTarget(Target):
             exit_codes[opt_level_snippet] = None
             # store the program in a temporary file
             new_filename = f"/tmp/temp{self.CURRENT_TIME}_lvl_{lvl}.py"
-            only_new_filename = os.path.basename(new_filename)
             i_content = program_content + "\n" + str(opt_level_snippet.value)
             with open(new_filename, "w", encoding="utf-8") as f:
                 f.write(i_content)
                 f.close()
             try:
-                # cmd = f"echo {new_filename}"
-                # cmd = f"python {new_filename}"
-                # docker run -v {new_filename}:/{only_new_filename} qiskit-driver {only_new_filename}
-                cmd = f"docker run --rm -v {new_filename}:/{only_new_filename} qiskit-driver python {only_new_filename}"
+                cmd = f"python {new_filename}"
                 exit_code = subprocess.run(
                     cmd,
                     shell=True,
@@ -294,16 +290,14 @@ class QiskitTarget(Target):
         return FResult.SAFE, "its safe"
 
     def _validate_with_crash_oracle(self, filepath: str) -> Tuple[FResult, str]:
-        """Check wether the transpiler returns an exception or not.
+        """Check whether the transpiler returns an exception or not.
 
         If the exception is a TranspilerError, then the program is valid and
         the bug is in the transpiler. If the exception is another one, then
         the program is invalid.
         """
-        abs_path = os.path.abspath(filepath)
-        only_filename = os.path.basename(filepath)
         try:
-            cmd = f"docker run --rm -v {abs_path}:/{only_filename} qiskit-driver python {only_filename}"
+            cmd = f"python {filepath}"
             exit_code = subprocess.run(
                 cmd,
                 shell=True,
@@ -337,10 +331,8 @@ class QiskitTarget(Target):
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(program_content)
             f.close()
-        abs_path = os.path.abspath(filepath)
-        only_filename = os.path.basename(filepath)
         try:
-            cmd = f"docker run --rm -v {abs_path}:/{only_filename} qiskit-driver python {only_filename}"
+            cmd = f"python {filepath}"
             exit_code = subprocess.run(
                 cmd,
                 shell=True,
@@ -375,10 +367,8 @@ class QiskitTarget(Target):
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(program_content)
             f.close()
-        abs_path = os.path.abspath(filepath)
-        only_filename = os.path.basename(filepath)
         try:
-            cmd = f"docker run --rm -v {abs_path}:/{only_filename} qiskit-driver python {only_filename}"
+            cmd = f"python {filepath}"
             exit_code = subprocess.run(
                 cmd,
                 shell=True,
