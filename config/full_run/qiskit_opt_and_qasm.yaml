@@ -30,7 +30,7 @@ fuzzing:
   # 1: mutate existing code
   # 2: semantically equivalent code generation
   # 3: combine previous two code generations
-  prompt_strategy: 0
+  prompt_strategy: 2
 
 
 
