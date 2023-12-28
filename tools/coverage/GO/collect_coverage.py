@@ -6,7 +6,7 @@ import time
 
 from rich.traceback import install
 
-from FuzzAll.util.util import natural_sort_key
+from Fuzz4All.util.util import natural_sort_key
 
 install()
 CURRENT_TIME = time.time()
@@ -18,6 +18,8 @@ from rich.progress import (
     TextColumn,
     TimeElapsedColumn,
 )
+
+GO = "go"
 
 
 def setup():
@@ -41,53 +43,6 @@ def teardown():
     )
 
 
-def test_textfmt():
-    with open("/home/steven/go-fuzz-corpus-real/aes/coverprofile", "r") as f:
-        cov = f.read()
-
-    covered_stmts, total_stmts = 0, 0
-
-    for cov_func in cov.splitlines()[1:]:
-        uid = cov_func.split(" ")[0]
-        stmts, covered = int(cov_func.split(" ")[1]), int(cov_func.split(" ")[2])
-        if covered > 0:
-            covered_stmts += stmts
-        total_stmts += stmts
-
-    print(
-        f"Covered: {covered_stmts}/{total_stmts} ({covered_stmts / total_stmts * 100:.2f}%)"
-    )
-
-
-def test():
-    with open("test.txt", "r") as f:
-        cov = f.read()
-
-    covered_stmts, total_stmts = 0, 0
-
-    for cov_func in cov.split("Func: ")[1:]:
-        # print(cov_func)
-        func_name = cov_func.split("\n")[0].strip()
-        src_file = cov_func.split("\n")[1].strip().split("Srcfile: ")[1].strip()
-
-        uid = f"file{src_file}:{func_name}"
-        print(uid)
-        for line in cov_func.split("\n")[3:]:
-            # check line[0] is an digit
-            if line == "" or line[0] not in "0123456789":
-                continue
-            stmts, covered = int(line.split("NS=")[1].strip().split(" = ")[0]), int(
-                line.split("NS=")[1].strip().split(" = ")[1]
-            )
-            if covered == 1:
-                covered_stmts += stmts
-            total_stmts += stmts
-
-    print(
-        f"Covered: {covered_stmts}/{total_stmts} ({covered_stmts/total_stmts*100:.2f}%)"
-    )
-
-
 def get_coverage(file, prev_cov):
 
     setup()
@@ -101,9 +56,9 @@ def get_coverage(file, prev_cov):
     # run go build with coverage and execute
     try:
         exit_code = subprocess.run(
-            f"cd /tmp/coverage{CURRENT_TIME} && go build -cover -o myprogram.exe -coverpkg=all . "
+            f"cd /tmp/coverage{CURRENT_TIME} && {GO} build -cover -o myprogram.exe -coverpkg=all . "
             f"&& GOCOVERDIR=tmp ./myprogram.exe "
-            f"&& go tool covdata debugdump -i=tmp > coverage.txt",
+            f"&& {GO} tool covdata debugdump -i=tmp > coverage.txt",
             shell=True,
             encoding="utf-8",
             capture_output=True,
@@ -191,12 +146,7 @@ def coverage_loop(args):
 
         import json
 
-        with open(
-            "/home/steven/fastd/fuzzall/FuzzAll/experiment/go/std_library/prev_coverage.json",
-            "r",
-        ) as f:
-            prev_coverage = json.load(f)
-        # prev_coverage = {}
+        prev_coverage = {}
 
         # loop through all files in folder in alphanumeric order
         files = glob.glob(args.folder + "/*.fuzz")
@@ -223,10 +173,8 @@ def coverage_loop(args):
 
             index += 1
 
-        import json
-
-        with open(args.folder + "/prev_coverage.json", "w") as f:
-            json.dump(prev_coverage, f, indent=4)
+            with open(args.folder + "/prev_coverage.json", "w") as f:
+                json.dump(prev_coverage, f, indent=4)
 
 
 def main():
@@ -239,7 +187,6 @@ def main():
     args = parser.parse_args()
 
     coverage_loop(args)
-    # test_textfmt()
 
 
 if __name__ == "__main__":

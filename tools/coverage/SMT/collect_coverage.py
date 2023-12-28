@@ -5,7 +5,7 @@ import time
 
 from rich.traceback import install
 
-from FuzzAll.util.util import natural_sort_key
+from Fuzz4All.util.util import natural_sort_key
 
 install()
 CURRENT_TIME = time.time()
@@ -18,10 +18,13 @@ from rich.progress import (
     TimeElapsedColumn,
 )
 
+SMT_FOLDER = "/home/coverage/cvc5/build"
+SMT = "/home/coverage/CVC5-1.0.5-COVERAGE/bin/cvc5"
+
 
 def clean_coverage(args):
     subprocess.run(
-        f"cd {args.smt_folder}; make coverage-reset",
+        f"cd {SMT_FOLDER}; make coverage-reset",
         shell=True,
         encoding="utf-8",
     )
@@ -29,7 +32,7 @@ def clean_coverage(args):
 
 def get_coverage(args):
     exit_code = subprocess.run(
-        f"cd {args.smt_folder}; make coverage",
+        f"cd {SMT_FOLDER}; make coverage",
         shell=True,
         encoding="utf-8",
         text=True,
@@ -69,6 +72,9 @@ def run_smt(smt_engine: str, source: str, pre_flags: str, post_flags: str):
             ],
             shell=True,
         )  # kill all tests thank you
+        return -1
+
+    return exit_code.returncode
 
 
 def coverage_loop(args):
@@ -83,6 +89,7 @@ def coverage_loop(args):
         clean_coverage(args)
         import os
 
+        num_valid, total = 0, 0
         files = glob.glob(args.folder + "/*.fuzz")
         files.sort(key=os.path.getmtime)
         start_time = os.path.getmtime(files[0])
@@ -91,20 +98,11 @@ def coverage_loop(args):
         files.sort(key=natural_sort_key)
         index = 0
         for file in p.track(files):
-            if args.logic != "":
-                with open(file, "r") as f:
-                    content = f.read()
-                content = f"(set-logic {args.logic})\n" + content
-                with open("/tmp/tmp_run.smt2", "w") as f:
-                    f.write(content)
-                run_smt(
-                    args.smt,
-                    "/tmp/tmp_run.smt2",
-                    "-m -i -q --check-models --lang smt2",
-                    "",
-                )
-            else:
-                run_smt(args.smt, file, "-m -i -q --check-models --lang smt2", "")
+            exit_code = run_smt(SMT, file, "-m -i -q --check-models --lang smt2", "")
+
+            if exit_code == 0:
+                num_valid += 1
+            total += 1
             if (index + 1) % int(args.interval) == 0:
                 line_cov, func_cov = get_coverage(args)
                 time_seconds = os.path.getmtime(file) - start_time
@@ -114,27 +112,23 @@ def coverage_loop(args):
 
             index += 1
 
+        line_cov, func_cov = get_coverage(args)
+        time_seconds = os.path.getmtime(file) - start_time
+        with open(args.folder + "/coverage.csv", "a") as f:
+            f.write(f"{index + 1},{line_cov},{func_cov},{time_seconds}\n")
 
-def get_seed_coverage(args):
-    clean_coverage(args)
-    for filename in glob.glob(f"{args.folder}/**/*.smt2", recursive=True):
-        print(filename)
-        run_smt(args.smt, filename, "-m -i -q --check-models --lang smt2", "")
-
-    line_cov, func_cov = get_coverage(args)
+        with open(args.folder + "/valid.txt", "a") as f:
+            f.write(str(num_valid) + "\n")
+            f.write(str(num_valid / total))
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--smt", type=str, required=True)
-    parser.add_argument("--smt_folder", type=str, required=True)
     parser.add_argument("--folder", type=str, required=True)
     parser.add_argument("--interval", type=str, required=True)
-    parser.add_argument("--logic", type=str, default="")
     args = parser.parse_args()
 
     coverage_loop(args)
-    # get_seed_coverage(args)
 
 
 if __name__ == "__main__":

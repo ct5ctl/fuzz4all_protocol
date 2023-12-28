@@ -4,11 +4,12 @@ import os
 import subprocess
 import time
 
-YARPGEN = "/home/steven/yarpgen/yarpgen"
-
 from rich.traceback import install
 
+from Fuzz4All.util.util import natural_sort_key
+
 install()
+CURRENT_TIME = time.time()
 
 from rich.progress import (
     BarColumn,
@@ -18,53 +19,22 @@ from rich.progress import (
     TimeElapsedColumn,
 )
 
-from FuzzAll.util.util import natural_sort_key
-
-CURRENT_TIME = time.time()
-
-
-def generate(args):
-    with Progress(
-        TextColumn("Fuzzing • [progress.percentage]{task.percentage:>3.0f}%"),
-        BarColumn(),
-        MofNCompleteColumn(),
-        TextColumn("•"),
-        TimeElapsedColumn(),
-    ) as p:
-        for num in p.track(range(15000, args.num)):
-            os.makedirs(f"{args.folder}/{num}", exist_ok=True)
-            subprocess.run(
-                f"{YARPGEN} --std=c++17 -d {args.folder}/{num}",
-                shell=True,
-                capture_output=True,
-                encoding="utf-8",
-                text=True,
-            )
+COMPILER = "/home/coverage/GCC-13-COVERAGE/bin/gcc"
+COV_FOLDER = "/home/coverage/gcc-coverage-build/gcc"
+GCOV = "/home/coverage/GCC-13-COVERAGE/bin/gcov"
 
 
-def clean_coverage(args):
-    subprocess.run(
-        f"cd {args.cov_folder}; lcov --zerocounters --directory .",
-        shell=True,
-        encoding="utf-8",
-    )
-
-
-def run_compile(
-    folder: str, compiler: str, source: str, pre_flags: str, post_flags: str
-):
+def run_compile(compiler: str, source: str, pre_flags: str, post_flags: str):
     try:
-        # print(f"cd {folder} && {compiler} {pre_flags} {source} {post_flags}")
         exit_code = subprocess.run(
-            f"cd {folder} &&" f"{compiler} {pre_flags} {source} {post_flags}",
+            f"{compiler} {pre_flags} {source} {post_flags}",
             shell=True,
             capture_output=True,
             encoding="utf-8",
-            timeout=10,
+            timeout=5,
             text=True,
         )
     except subprocess.TimeoutExpired as te:
-        print(f"cd {folder} && {compiler} {pre_flags} {source} {post_flags}")
         pname = f"'{source}'"
         subprocess.run(
             ["ps -ef | grep " + pname + " | grep -v grep | awk '{print $2}'"],
@@ -78,20 +48,32 @@ def run_compile(
             ],
             shell=True,
         )  # kill all tests thank you
+        return -1
+    except UnicodeDecodeError:
+        return -1
+    # print(exit_code.returncode)
 
-    return
+    if exit_code.returncode == 0:
+        # rm .out file
+        subprocess.run(
+            f"rm /tmp/out{CURRENT_TIME}",
+            shell=True,
+            encoding="utf-8",
+        )
+
+    return exit_code.returncode
 
 
 def get_coverage(args):
     subprocess.run(
-        f"cd {args.cov_folder}; lcov --capture --directory . --output-file coverage.info --gcov-tool {args.gcov}",
+        f"cd {COV_FOLDER}; lcov --capture --directory . --output-file coverage.info --gcov-tool {GCOV}",
         shell=True,
         encoding="utf-8",
         text=True,
         capture_output=True,
     )
     exit_code = subprocess.run(
-        f"cd {args.cov_folder}; lcov --summary coverage.info",
+        f"cd {COV_FOLDER}; lcov --summary coverage.info",
         shell=True,
         encoding="utf-8",
         text=True,
@@ -107,7 +89,15 @@ def get_coverage(args):
     return line_cov, func_cov
 
 
-def coverage(args):
+def clean_coverage(args):
+    subprocess.run(
+        f"cd {COV_FOLDER}; lcov --zerocounters --directory .",
+        shell=True,
+        encoding="utf-8",
+    )
+
+
+def coverage_loop(args):
     with Progress(
         TextColumn("Fuzzing • [progress.percentage]{task.percentage:>3.0f}%"),
         BarColumn(),
@@ -119,10 +109,16 @@ def coverage(args):
         clean_coverage(args)
 
         # loop through all files in folder in alphanumeric order
-        folders = glob.glob(args.folder + "/*/")
-        folders.sort(key=natural_sort_key)
+        files = glob.glob(args.folder + "/*.fuzz")
+        files.sort(key=os.path.getmtime)
+        start_time = os.path.getmtime(files[0])
+        initial_time = start_time
+
+        files = glob.glob(args.folder + "/*.fuzz")
+        files.sort(key=natural_sort_key)
         index = 0
-        for folder in p.track(folders):
+        num_valid = 0
+        for file in p.track(files):
 
             # skip until start
             if index + 1 < args.start:
@@ -130,42 +126,45 @@ def coverage(args):
                 continue
 
             # compile the file
-            run_compile(
-                folder,
-                args.compiler,
-                "driver.cpp func.cpp",
-                f"-x c++ -std=c++23",
+            ret_code = run_compile(
+                COMPILER,
+                file,
+                f"-x c -std=c2x ",
                 f"-o /tmp/out{CURRENT_TIME}",
             )
+            if ret_code == 0:
+                num_valid += 1
+
+            time_seconds = os.path.getmtime(file) - start_time
             if (index + 1) % args.interval == 0 and index + 1 >= args.start:
-                # get the coverage
                 line_cov, func_cov = get_coverage(args)
                 # append to csv file
                 with open(args.folder + "/coverage.csv", "a") as f:
-                    f.write(f"{index + 1},{line_cov},{func_cov}\n")
+                    f.write(f"{index + 1},{line_cov},{func_cov},{time_seconds}\n")
+                start_time = os.path.getmtime(file)
 
             if index + 1 >= args.end:
                 break
             index += 1
 
+        print(f"Total valid: {num_valid}")
+        with open(args.folder + "/valid.txt", "w") as f:
+            f.write(str(num_valid))
+            f.write(str(num_valid / index))
+
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--folder", type=str, required=True)
-    parser.add_argument("--num", type=int, required=True)
-    parser.add_argument("--coverage", action="store_true")
-    parser.add_argument("--interval", type=int)
+    parser.add_argument("--folder", type=str)
+    parser.add_argument("--interval", type=int, required=True)
     parser.add_argument("--start", type=int, default=0)
     parser.add_argument("--end", type=int, default=1000000000)
-    parser.add_argument("--cov_folder", type=str)
-    parser.add_argument("--gcov", type=str)
-    parser.add_argument("--compiler", type=str)
     args = parser.parse_args()
-    if args.coverage:
-        coverage(args)
+
+    if args.folder is not None:
+        coverage_loop(args)
     else:
-        os.makedirs(args.folder, exist_ok=True)
-        generate(args)
+        print("No folder specified")
 
 
 if __name__ == "__main__":

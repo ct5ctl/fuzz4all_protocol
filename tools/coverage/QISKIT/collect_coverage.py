@@ -3,6 +3,7 @@
 By default it collects the coverage of all the files related to qiskit, namely
 all those in the site-packages folder starting with "qiskit".
 """
+import argparse
 import multiprocessing
 import os
 import re
@@ -13,9 +14,7 @@ from functools import partial
 from multiprocessing import Pool
 from typing import Any, Dict, List, Tuple
 
-import click
 import coverage
-import matplotlib.pyplot as plt
 import pandas as pd
 
 
@@ -173,72 +172,30 @@ def create_cumulative_coverage_csv(output_folder: str):
     return output_csv
 
 
-def plot_data(path_csv: str, path_output: str):
-    """Plot the data in the csv file and save the plot in the path_output."""
-    df = pd.read_csv(path_csv)
-    df = df.sort_values(by="n_files")
-    df.plot(x="n_files", y="perc_total_coverage")
-    plt.savefig(os.path.join(path_output, "cumulative_coverage.png"))
-
-
-@click.command()
-@click.option(
-    "--target-folder",
-    "-t",
-    help="The folder containing the files to cover.",
-)
-@click.option(
-    "--output-folder",
-    "-o",
-    help="The folder where to save the coverage info.",
-)
-@click.option(
-    "--every-n-files",
-    "-n",
-    default=1,
-    help="Collect coverage info every n files.",
-)
-@click.option(
-    "--timeout",
-    "-to",
-    default=10,
-    help="Timeout for each file (in seconds).",
-)
-@click.option(
-    "--file-extension",
-    "-fe",
-    default=".fuzz",
-    help="The suffix of the files to cover.",
-)
-@click.option(
-    "--packages-to-track",
-    "-p",
-    default=None,
-    multiple=True,
-    help="The packages to track in the site-packages folder (use relative names, e.g. qiskit_aer).",
-)
-@click.option(
-    "--verbose",
-    "-v",
-    default=False,
-    help="Print more info (such as the output of the programs, increase the timeout because the printout slows the execution).",
-)
-def main(
-    target_folder: str,
-    output_folder: str,
-    every_n_files: int,
-    timeout: int,
-    file_extension: str,
-    packages_to_track: List[str],
-    verbose: bool,
-):
+def main():
     """Collect the coverage info for all packages starting with "qiskit"."""
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--folder", type=str)
+    parser.add_argument("--interval", type=int, required=True)
+    args = parser.parse_args()
+
+    if args.folder is None:
+        print("No folder specified")
+        exit()
+
+    output_folder = args.folder + "/coverage"
+
     # create the output folder
     os.makedirs(output_folder, exist_ok=True)
     data_file = os.path.join(output_folder, ".mycoverage")
     abs_data_file = os.path.abspath(data_file)
     # get the site-packages directory
     site_packages = os.path.dirname(os.path.dirname(coverage.__file__))
+
+    # track terra compiler
+    packages_to_track = ["qiskit"]
+
     print(f"Packages to track: {packages_to_track}")
     if len(packages_to_track) == 0:
         print("expected qiskit packages.")
@@ -279,9 +236,9 @@ source =
 
     # get all files starting with "to_run"
     files = [
-        os.path.join(target_folder, f)
-        for f in os.listdir(target_folder)
-        if f.endswith(file_extension)
+        os.path.join(args.folder, f)
+        for f in os.listdir(args.folder)
+        if f.endswith(".fuzz")
     ]
     # filenames
     # 1.fuzz
@@ -302,13 +259,12 @@ source =
         sorted_files=sorted_files,
         data_file=abs_data_file,
         config_file=abs_config_file_path,
-        save_coverage_every_n_files=every_n_files,
+        save_coverage_every_n_files=args.interval,
         out_folder=output_folder,
-        timeout=timeout,
-        verbose=verbose,
+        timeout=5,
+        verbose=False,
     )
     print("-" * 80)
-    print(f"Total success: {total_success}. Total failure (timeout): {total_failure}")
 
     cov = coverage.Coverage(
         data_file=abs_data_file, data_suffix=True, config_file=abs_config_file_path
@@ -322,7 +278,14 @@ source =
     cov.xml_report(outfile=xml_path)
 
     path_csv = create_cumulative_coverage_csv(output_folder)
-    plot_data(path_csv, output_folder)
+
+    print(f"Total success: {total_success}. Total failure (timeout): {total_failure}")
+
+    valid_path = os.path.join(output_folder, "valid.txt")
+    with open(valid_path, "w") as f:
+        f.write(
+            f"Total success: {total_success}. Total failure (timeout): {total_failure}"
+        )
 
 
 if __name__ == "__main__":

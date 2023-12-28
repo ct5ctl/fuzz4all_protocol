@@ -6,7 +6,7 @@ import time
 
 from rich.traceback import install
 
-from FuzzAll.util.util import natural_sort_key
+from Fuzz4All.util.util import natural_sort_key
 
 install()
 CURRENT_TIME = time.time()
@@ -18,6 +18,10 @@ from rich.progress import (
     TextColumn,
     TimeElapsedColumn,
 )
+
+COMPILER = "/home/coverage/GCC-13-COVERAGE/bin/g++"
+COV_FOLDER = "/home/coverage/gcc-coverage-build/gcc"
+GCOV = "/home/coverage/GCC-13-COVERAGE/bin/gcov"
 
 
 def run_compile(compiler: str, source: str, pre_flags: str, post_flags: str):
@@ -44,20 +48,31 @@ def run_compile(compiler: str, source: str, pre_flags: str, post_flags: str):
             ],
             shell=True,
         )  # kill all tests thank you
+        return -1
+    except UnicodeDecodeError:
+        return -1
 
-    return
+    if exit_code.returncode == 0:
+        # rm .out file
+        subprocess.run(
+            f"rm /tmp/out{CURRENT_TIME}",
+            shell=True,
+            encoding="utf-8",
+        )
+
+    return exit_code.returncode
 
 
 def get_coverage(args):
     subprocess.run(
-        f"cd {args.cov_folder}; lcov --capture --directory . --output-file coverage.info --gcov-tool {args.gcov}",
+        f"cd {COV_FOLDER}; lcov --capture --directory . --output-file coverage.info --gcov-tool {GCOV}",
         shell=True,
         encoding="utf-8",
         text=True,
         capture_output=True,
     )
     exit_code = subprocess.run(
-        f"cd {args.cov_folder}; lcov --summary coverage.info",
+        f"cd {COV_FOLDER}; lcov --summary coverage.info",
         shell=True,
         encoding="utf-8",
         text=True,
@@ -75,32 +90,10 @@ def get_coverage(args):
 
 def clean_coverage(args):
     subprocess.run(
-        f"cd {args.cov_folder}; lcov --zerocounters --directory .",
+        f"cd {COV_FOLDER}; lcov --zerocounters --directory .",
         shell=True,
         encoding="utf-8",
     )
-
-
-def save_coverage(args):
-    # create folder for coverage
-    if os.path.exists(args.folder + "/prev_coverage"):
-        subprocess.run(
-            f"cd {args.folder}; rm -rf prev_coverage",
-            shell=True,
-            encoding="utf-8",
-        )
-    os.makedirs(args.folder + "/prev_coverage", exist_ok=True)
-    # copy coverage folder to fuzzing folder
-    subprocess.run(
-        "cd "
-        + args.cov_folder
-        + '; find -type f -name "*.gcda" -exec cp --parent {} '
-        + args.folder
-        + "/prev_coverage \;",
-        shell=True,
-        encoding="utf-8",
-    )
-    print("Coverage saved")
 
 
 def coverage_loop(args):
@@ -114,22 +107,16 @@ def coverage_loop(args):
         # clean coverage
         clean_coverage(args)
 
-        if os.path.exists(args.folder + "/prev_coverage"):
-            # copy previous coverage to coverage folder
-            subprocess.run(
-                f"cp -ra {args.folder}/prev_coverage/. {args.cov_folder}/",
-                shell=True,
-                encoding="utf-8",
-            )
-
         # loop through all files in folder in alphanumeric order
         files = glob.glob(args.folder + "/*.fuzz")
         files.sort(key=os.path.getmtime)
         start_time = os.path.getmtime(files[0])
+        initial_time = start_time
 
         files = glob.glob(args.folder + "/*.fuzz")
         files.sort(key=natural_sort_key)
         index = 0
+        num_valid = 0
         for file in p.track(files):
 
             # skip until start
@@ -138,104 +125,43 @@ def coverage_loop(args):
                 continue
 
             # compile the file
-            run_compile(
-                args.compiler,
+            ret_code = run_compile(
+                COMPILER,
                 file,
-                f"-x c++ -std=c++23 {args.e_include}",
+                f"-x c++ -std=c++23 ",
                 f"-o /tmp/out{CURRENT_TIME}",
             )
-            if args.opt:
-                opt = ["-O3", "-O2", "-O1"]
-                for o in opt:
-                    run_compile(
-                        args.compiler,
-                        file,
-                        f"-x c++ -std=c++23 {o} {args.e_include}",
-                        f"-o /tmp/out{CURRENT_TIME}",
-                    )
+            if ret_code == 0:
+                num_valid += 1
+
+            time_seconds = os.path.getmtime(file) - start_time
             if (index + 1) % args.interval == 0 and index + 1 >= args.start:
-                # get the coverage
                 line_cov, func_cov = get_coverage(args)
-                time_seconds = os.path.getmtime(file) - start_time
                 # append to csv file
-                if args.opt:
-                    with open(args.folder + "/coverage_opt.csv", "a") as f:
-                        f.write(f"{index + 1},{line_cov},{func_cov},{time_seconds}\n")
-                else:
-                    with open(args.folder + "/coverage.csv", "a") as f:
-                        f.write(f"{index + 1},{line_cov},{func_cov},{time_seconds}\n")
+                with open(args.folder + "/coverage.csv", "a") as f:
+                    f.write(f"{index + 1},{line_cov},{func_cov},{time_seconds}\n")
+                start_time = os.path.getmtime(file)
 
             if index + 1 >= args.end:
                 break
             index += 1
 
-        save_coverage(args)
-
-
-def sum_coverage(args):
-    with Progress(
-        TextColumn("Fuzzing • [progress.percentage]{task.percentage:>3.0f}%"),
-        BarColumn(),
-        MofNCompleteColumn(),
-        TextColumn("•"),
-        TimeElapsedColumn(),
-    ) as p:
-        # clean coverage
-        clean_coverage(args)
-
-        # loop through all files in folder in alphanumeric order
-        for folder in args.folders:
-            files = glob.glob(folder + "/*.fuzz")
-            files.sort(key=natural_sort_key)
-            index = 0
-            for file in p.track(files):
-                # skip until start
-                if index + 1 < args.start:
-                    index += 1
-                    continue
-
-                # compile the file
-                run_compile(
-                    args.compiler,
-                    file,
-                    f"-x c++ -std=c++23 {args.e_include}",
-                    f"-o /tmp/out{CURRENT_TIME}",
-                )
-                if args.opt:
-                    opt = ["-O3", "-O2", "-O1"]
-                    for o in opt:
-                        run_compile(
-                            args.compiler,
-                            file,
-                            f"-x c++ -std=c++23 {o} {args.e_include}",
-                            f"-o /tmp/out{CURRENT_TIME}",
-                        )
-                if index + 1 >= args.end:
-                    break
-                index += 1
-
-        # get the coverage
-        line_cov, func_cov = get_coverage(args)
+        print(f"Total valid: {num_valid}")
+        with open(args.folder + "/valid.txt", "w") as f:
+            f.write(str(num_valid) + "\n")
+            f.write(str(num_valid / index))
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--compiler", type=str, required=True)
     parser.add_argument("--folder", type=str)
-    parser.add_argument("--folders", nargs="+", help="<Required> Set flag")
     parser.add_argument("--interval", type=int, required=True)
     parser.add_argument("--start", type=int, default=0)
     parser.add_argument("--end", type=int, default=1000000000)
-    parser.add_argument("--cov_folder", type=str, required=True)
-    parser.add_argument("--gcov", type=str, required=True)
-    parser.add_argument("--e_include", type=str, default="")  # for csmith
-    parser.add_argument("--opt", action="store_true")
     args = parser.parse_args()
 
     if args.folder is not None:
         coverage_loop(args)
-    elif args.folders is not None:
-        sum_coverage(args)
     else:
         print("No folder specified")
 
