@@ -113,12 +113,9 @@ class SMTTarget(Target):
         return code
 
     def validate_individual(self, filename) -> (FResult, str):
-        # TODO rework this entire algo since its very scattered currently
-
-        # run cvc5
         try:
             cvc_exit_code = subprocess.run(
-                f"cvc5 -m -i -q --check-models --lang smt2 {filename}",
+                f"{self.target_name} -m -i -q --check-models --lang smt2 {filename}",
                 shell=True,
                 capture_output=True,
                 text=True,
@@ -142,88 +139,9 @@ class SMTTarget(Target):
         except UnicodeDecodeError as ue:
             return FResult.FAILURE, "UnicodeDecodeError"
 
-        # run z3
-        try:
-            # add "t" as input to throw in shell
-            z3_exit_code = subprocess.run(
-                f"printf 't' | z3 model_validate=true {filename}",
-                shell=True,
-                capture_output=True,
-                text=True,
-                timeout=5,
-            )
-        except subprocess.TimeoutExpired as te:
-            pname = f"'{filename}'"
-            subprocess.run(
-                ["ps -ef | grep " + pname + " | grep -v grep | awk '{print $2}'"],
-                shell=True,
-            )
-            subprocess.run(
-                [
-                    "ps -ef | grep "
-                    + pname
-                    + " | grep -v grep | awk '{print $2}' | xargs -r kill -9"
-                ],
-                shell=True,
-            )  # kill all tests thank you
-            return FResult.TIMED_OUT, "Z3 Timed out"
-        except UnicodeDecodeError as ue:
-            return FResult.FAILURE, "UnicodeDecodeError"
-
-        # check for z3 assertion violation
-        if "ASSERTION VIOLATION" in z3_exit_code.stderr:
-            return FResult.ERROR, "ASSERTION VIOLATION. Z3: {}".format(
-                z3_exit_code.stderr
-            )
-
-        # first grab the sat results, because some error can be tolerable for sat solving actually
-        z3_sat = _check_sat(z3_exit_code.stdout)
-        cvc5_sat = _check_sat(cvc_exit_code.stdout)
-        if (z3_sat != "" and cvc5_sat != "") and z3_sat != cvc5_sat:
-            if z3_sat == "unknown" or cvc5_sat == "unknown":
-                return FResult.SAFE, "unknown solve"
-            return (
-                FResult.ERROR,
-                "Different SAT Results. Z3: {} CVC5: {}\nZ3:{}\nCVC5:{}".format(
-                    z3_sat, cvc5_sat, z3_exit_code.stdout, cvc_exit_code.stdout
-                ),
-            )
-        elif (z3_sat != "" and cvc5_sat != "") and z3_sat == cvc5_sat:
-            return FResult.SAFE, "its safe"
-
-        # failed compilation
-        if z3_exit_code.returncode != 0 and cvc_exit_code.returncode != 0:
-            return FResult.FAILURE, "Z3:\n{}\nCVC5:\n{}".format(
-                z3_exit_code.stdout + z3_exit_code.stderr,
+        if cvc_exit_code.returncode != 0:
+            return FResult.FAILURE, "CVC5:\n{}".format(
                 cvc_exit_code.stdout + cvc_exit_code.stderr,
             )
-
-        if z3_exit_code.returncode != 0:
-            if _check_error(cvc_exit_code.stdout):
-                return FResult.FAILURE, "Z3:\n{}\nCVC5:\n{}".format(
-                    z3_exit_code.stdout + z3_exit_code.stderr,
-                    cvc_exit_code.stdout + cvc_exit_code.stderr,
-                )
-            else:
-                return FResult.ERROR, "CVC5 is fine:\n{}\n but Z3 outputs:\n{}".format(
-                    cvc_exit_code.stdout + cvc_exit_code.stderr,
-                    cvc_exit_code.stdout + cvc_exit_code.stderr,
-                )
-        elif cvc_exit_code.returncode != 0:
-            if _check_error(z3_exit_code.stdout):
-                return FResult.FAILURE, "Z3:\n{}\nCVC5:\n{}".format(
-                    z3_exit_code.stdout + z3_exit_code.stderr,
-                    cvc_exit_code.stdout + cvc_exit_code.stderr,
-                )
-            else:
-                if _check_cvc5_parse_error(cvc_exit_code.stdout):
-                    return FResult.FAILURE, "Z3:\n{}\nCVC5:\n{}".format(
-                        z3_exit_code.stdout + z3_exit_code.stderr,
-                        cvc_exit_code.stdout + cvc_exit_code.stderr,
-                    )
-                return FResult.ERROR, "Z3 is fine:\n{}\n but CVC5 outputs:\n{}".format(
-                    z3_exit_code.stdout + z3_exit_code.stderr,
-                    cvc_exit_code.stdout + cvc_exit_code.stderr,
-                )
 
         return FResult.SAFE, "its safe"

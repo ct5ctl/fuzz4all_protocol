@@ -131,13 +131,20 @@ def cli(ctx, config_file):
     help="batch size for the model",
 )
 @click.option(
+    "model_name",
+    "--model_name",
+    type=str,
+    default="bigcode/starcoderbase",
+    help="model to use",
+)
+@click.option(
     "target",
     "--target",
     type=str,
     default="",
     help="specific target to run",
 )
-def main_with_config(ctx, folder, cpu, batch_size, target):
+def main_with_config(ctx, folder, cpu, batch_size, target, model_name):
     """Run the main using a configuration file."""
     config_dict = ctx.obj["CONFIG_DICT"]
     fuzzing = config_dict["fuzzing"]
@@ -146,6 +153,8 @@ def main_with_config(ctx, folder, cpu, batch_size, target):
         config_dict["llm"]["device"] = "cpu"
     if batch_size:
         config_dict["llm"]["batch_size"] = batch_size
+    if model_name != "":
+        config_dict["llm"]["model_name"] = model_name
     if target != "":
         config_dict["fuzzing"]["target_name"] = target
     print(config_dict)

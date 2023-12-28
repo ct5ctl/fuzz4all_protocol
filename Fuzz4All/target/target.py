@@ -11,11 +11,6 @@ from rich.progress import track
 from Fuzz4All.model import make_model
 from Fuzz4All.util.api_request import create_config, request_engine
 from Fuzz4All.util.Logger import LEVEL, Logger
-from Fuzz4All.util.util import (
-    comment_remover,
-    create_chatgpt_docstring_template,
-    simple_parse,
-)
 
 
 class FResult(Enum):
