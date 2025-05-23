@@ -3,6 +3,7 @@ import socket
 from typing import List, Tuple
 
 from Fuzz4All.target.target import Target, FResult
+from Fuzz4All.model import make_model
 
 
 class FTPTarget(Target):
@@ -10,7 +11,7 @@ class FTPTarget(Target):
         super().__init__(**kwargs)
         self.config_dict = kwargs.get("config_dict", {})
         self.model = make_model(
-            eos=[],  # 或 ["\n", "<eom>"] 视你的协议结束标志而定
+            eos=[],
             model_name=kwargs["model_name"],
             device=kwargs["device"],
             max_length=kwargs["max_length"],
