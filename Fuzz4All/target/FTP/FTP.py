@@ -11,6 +11,27 @@ class FTPTarget(Target):
         self.prompt = self.build_prompt()
         self.generated_count = 0
 
+    def build_prompt(self) -> str:
+        """
+        构建发送给 LLM 的 prompt，根据 trigger、hint、文档等拼接而成。
+        """
+        config = self.config_dict
+        target_config = config["target"]
+        fuzz_config = config["fuzzing"]
+
+        prompt = ""
+
+        # 包裹触发提示
+        if "trigger_to_generate_input" in target_config:
+            trigger = self.wrap_in_comment(target_config["trigger_to_generate_input"])
+            prompt += trigger + "\n"
+
+        # 添加输入 hint
+        if "input_hint" in target_config:
+            prompt += target_config["input_hint"] + "\n"
+
+        return prompt
+
     def generate(self) -> List[str]:
         self.generated_count += 1
         return self.model.generate(self.prompt)
