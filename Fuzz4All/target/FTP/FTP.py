@@ -9,6 +9,12 @@ class FTPTarget(Target):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.config_dict = kwargs.get("config_dict", {})
+        self.model = make_model(
+            eos=[],  # 或 ["\n", "<eom>"] 视你的协议结束标志而定
+            model_name=kwargs["model_name"],
+            device=kwargs["device"],
+            max_length=kwargs["max_length"],
+        )
 
     def initialize(self):
         # 构造生成提示词
