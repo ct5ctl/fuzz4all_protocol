@@ -7,6 +7,7 @@ from Fuzz4All.target.JAVA.JAVA import JAVATarget
 from Fuzz4All.target.QISKIT.QISKIT import QiskitTarget
 from Fuzz4All.target.SMT.SMT import SMTTarget
 from Fuzz4All.target.target import Target
+from Fuzz4All.target.FTP.FTP import FTPTarget
 
 
 def make_target(kwargs: Dict[str, Any]) -> Target:
@@ -24,6 +25,8 @@ def make_target(kwargs: Dict[str, Any]) -> Target:
         return GOTarget(**kwargs)
     elif language == "java":  # Java
         return JAVATarget(**kwargs)
+    elif target["language"] == "ftp":
+        return FTPTarget(**kwargs)
     else:
         raise ValueError(f"Invalid target {language}")
 
@@ -73,5 +76,7 @@ def make_target_with_config(config_dict: Dict[str, Any]) -> Target:
         return GOTarget(**target_compat_dict)
     elif target["language"] == "java":
         return JAVATarget(**target_compat_dict)
+    elif target["language"] == "ftp":             
+        return FTPTarget(**target_compat_dict)
     else:
         raise ValueError(f"Invalid target {target['language']}")
