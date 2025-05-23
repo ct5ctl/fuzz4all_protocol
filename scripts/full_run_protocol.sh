@@ -15,7 +15,7 @@ echo "DEVICE: $DEVICE"
 echo ""
 
 for target in "${protocols[@]}"; do
-    config="config/full_run/${target}.yaml"
+    config="/home/Fuzz4All/config/full_run/${target}.yaml"
     folder="outputs/full_run/${target}/"
     target_name="placeholder-for-${target}"  # Just a placeholder. Real execution logic is in the Target class.
 
