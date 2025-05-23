@@ -46,6 +46,10 @@ class FTPTarget(Target):
             return True, "FTP command executed successfully"
         except Exception as e:
             return False, f"FTP error: {str(e)}"
+    
+    def wrap_in_comment(self, prompt: str) -> str:
+        # FTP 请求没有真正的注释语法，用 # 表示注释对模型即可
+        return f"# {prompt}"
 
     def parse_validation_message(self, success: bool, message: str, file_path: str):
         if success:
