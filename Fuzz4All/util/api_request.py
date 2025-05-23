@@ -2,10 +2,12 @@ import os
 import signal
 import time
 
-import openai
-
-openai.api_key = os.environ.get("OPENAI_API_KEY", "dummy")
-client = openai.OpenAI()
+try:
+    import openai
+    openai.api_key = os.environ.get("OPENAI_API_KEY", "dummy")
+    client = openai.OpenAI()
+except:
+    client = None
 
 
 def create_openai_config(
