@@ -1,0 +1,27 @@
+fuzzing:
+  output_folder: ./outputs/full_run/forked-daapd/
+  num: 2000
+  total_time: 0.39
+  log_level: 3
+  otf: false
+  resume: false
+  evaluate: false
+  use_hand_written_prompt: false
+  no_input_prompt: false
+  prompt_strategy: 0
+
+target:
+  language: http
+  path_documentation: config/documentation/protocol/forked-daapd.md
+  path_example_code:
+  trigger_to_generate_input: "Generate a valid DAAP HTTP request such as GET /server-info or GET /databases for forked-daapd."
+  input_hint: "GET /server-info HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n"
+  path_hand_written_prompt:
+  target_string: "GET"
+
+llm:
+  temperature: 1
+  batch_size: 30
+  device: cuda
+  model_name: bigcode/starcoderbase
+  max_length: 1024

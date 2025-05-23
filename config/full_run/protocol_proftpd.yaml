@@ -1,0 +1,27 @@
+fuzzing:
+  output_folder: ./outputs/full_run/proftpd/
+  num: 2000
+  total_time: 1.32
+  log_level: 3
+  otf: false
+  resume: false
+  evaluate: false
+  use_hand_written_prompt: false
+  no_input_prompt: false
+  prompt_strategy: 0
+
+target:
+  language: ftp
+  path_documentation: config/documentation/protocol/proftpd.md
+  path_example_code:
+  trigger_to_generate_input: "Generate a valid FTP command sequence to test login, directory listing or upload for proftpd."
+  input_hint: "USER root\r\nPASS password\r\n"
+  path_hand_written_prompt:
+  target_string: "USER"
+
+llm:
+  temperature: 1
+  batch_size: 30
+  device: cuda
+  model_name: bigcode/starcoderbase
+  max_length: 1024

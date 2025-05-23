@@ -1,0 +1,27 @@
+fuzzing:
+  output_folder: ./outputs/full_run/bftpd/
+  num: 2000
+  total_time: 1.02
+  log_level: 3
+  otf: false
+  resume: false
+  evaluate: false
+  use_hand_written_prompt: false
+  no_input_prompt: false
+  prompt_strategy: 0
+
+target:
+  language: ftp
+  path_documentation: config/documentation/protocol/bftpd.md
+  path_example_code:
+  trigger_to_generate_input: "Generate a valid FTP command sequence supported by bftpd for login, upload or file browsing."
+  input_hint: "USER anonymous\r\nPASS ftp@\r\n"
+  path_hand_written_prompt:
+  target_string: "USER"
+
+llm:
+  temperature: 1
+  batch_size: 30
+  device: cuda
+  model_name: bigcode/starcoderbase
+  max_length: 1024

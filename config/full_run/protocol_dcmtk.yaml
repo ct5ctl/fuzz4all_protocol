@@ -1,0 +1,27 @@
+fuzzing:
+  output_folder: ./outputs/full_run/dcmtk/
+  num: 2000
+  total_time: 4.38
+  log_level: 3
+  otf: false
+  resume: false
+  evaluate: false
+  use_hand_written_prompt: false
+  no_input_prompt: false
+  prompt_strategy: 0
+
+target:
+  language: dicom
+  path_documentation: config/documentation/protocol/dcmtk.md
+  path_example_code:
+  trigger_to_generate_input: "Generate a valid DICOM association request or C-ECHO/C-STORE message for DCMTK."
+  input_hint: "\x01\x00\x00\x00..."  # placeholder for binary input
+  path_hand_written_prompt:
+  target_string: "DICM"
+
+llm:
+  temperature: 1
+  batch_size: 30
+  device: cuda
+  model_name: bigcode/starcoderbase
+  max_length: 1024

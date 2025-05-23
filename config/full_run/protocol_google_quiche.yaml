@@ -1,0 +1,27 @@
+fuzzing:
+  output_folder: ./outputs/full_run/google_quiche/
+  num: 2000
+  total_time: 2.75
+  log_level: 3
+  otf: false
+  resume: false
+  evaluate: false
+  use_hand_written_prompt: false
+  no_input_prompt: false
+  prompt_strategy: 0
+
+target:
+  language: quic
+  path_documentation: config/documentation/protocol/google_quiche.md
+  path_example_code:
+  trigger_to_generate_input: "Generate a valid QUIC Initial, Handshake, or HTTP/3 stream message for Google QUICHE stack."
+  input_hint: "\xC0\x00\x00\x00..."  # example QUIC binary start
+  path_hand_written_prompt:
+  target_string: "\x00\x01"  # placeholder for frame type
+
+llm:
+  temperature: 1
+  batch_size: 30
+  device: cuda
+  model_name: bigcode/starcoderbase
+  max_length: 1024

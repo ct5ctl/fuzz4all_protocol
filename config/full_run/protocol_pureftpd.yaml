@@ -1,0 +1,34 @@
+fuzzing:
+  output_folder: ./outputs/full_run/pureftpd/
+  num: 2000
+  total_time: 0.16
+  log_level: 3
+  otf: false
+  resume: false
+  evaluate: false
+  use_hand_written_prompt: false
+  no_input_prompt: false
+  prompt_strategy: 0
+
+target:
+  language: ftp
+  path_documentation: config/documentation/protocol/pureftpd.md
+  path_example_code:
+  trigger_to_generate_input: "Generate a valid FTP request to login, upload a file, or list files."
+  input_hint: "USER 123\r\nPASS guest@\r\n"
+  path_hand_written_prompt:
+  target_string: "USER"  
+
+# llm:
+#   temperature: 1
+#   batch_size: 30
+#   device: api
+#   model_name: deepseek-chat
+#   max_length: 512
+
+llm:
+  temperature: 1
+  batch_size: 30
+  device: cuda
+  model_name: bigcode/starcoderbase
+  max_length: 1024

@@ -1,0 +1,27 @@
+fuzzing:
+  output_folder: ./outputs/full_run/live555/
+  num: 2000
+  total_time: 2.47
+  log_level: 3
+  otf: false
+  resume: false
+  evaluate: false
+  use_hand_written_prompt: false
+  no_input_prompt: false
+  prompt_strategy: 0
+
+target:
+  language: rtsp
+  path_documentation: config/documentation/protocol/live555.md
+  path_example_code:
+  trigger_to_generate_input: "Generate a valid RTSP request like OPTIONS, DESCRIBE or SETUP for live555 server."
+  input_hint: "OPTIONS rtsp://127.0.0.1:8554/ RTSP/1.0\r\nCSeq: 1\r\n\r\n"
+  path_hand_written_prompt:
+  target_string: "RTSP"
+
+llm:
+  temperature: 1
+  batch_size: 30
+  device: cuda
+  model_name: bigcode/starcoderbase
+  max_length: 1024
