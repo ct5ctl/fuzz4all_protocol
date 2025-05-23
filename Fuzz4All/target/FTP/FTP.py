@@ -6,6 +6,10 @@ from Fuzz4All.target.target import Target, FResult
 
 
 class FTPTarget(Target):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.config_dict = kwargs.get("config_dict", {})
+
     def initialize(self):
         # 构造生成提示词
         self.prompt = self.build_prompt()
