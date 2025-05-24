@@ -43,7 +43,8 @@ class DICOMTarget(Target):
         return f"# {prompt}"
 
     def parse_validation_message(self, success: bool, message: str, file_path: str):
-        print(f"[{"VALID" if success else "INVALID"}] {file_path}: {message}")
+        status = "VALID" if success else "INVALID"
+        print(f"[{status}] {file_path}: {message}")
 
     def update(self, prev: List[Tuple[FResult, str]]):
         pass
