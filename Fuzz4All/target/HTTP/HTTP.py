@@ -7,7 +7,7 @@ from Fuzz4All.target.target import Target, FResult
 from Fuzz4All.model import make_model
 
 
-class RTSPTarget(Target):
+class HTTPTarget(Target):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.config_dict = kwargs.get("config_dict", {})
@@ -37,15 +37,28 @@ class RTSPTarget(Target):
         return self.model.generate(self.prompt)
 
     def validate_individual(self, file_path: str) -> Tuple[bool, str]:
-        return True, "RTSP validation placeholder"
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                request = f.read()
+        except Exception as e:
+            return False, f"Failed to read file: {e}"
+
+        try:
+            conn = http.client.HTTPConnection("127.0.0.1", 80, timeout=5)
+            conn.request("GET", "/")
+            conn.close()
+            return True, "HTTP request sent successfully"
+        except Exception as e:
+            return False, f"HTTP error: {str(e)}"
 
     def wrap_in_comment(self, prompt: str) -> str:
         return f"// {prompt}"
 
     def parse_validation_message(self, success: bool, message: str, file_path: str):
-        status = "VALID" if success else "INVALID"
-        print(f"[{status}] {file_path}: {message}")
+        if success:
+            print(f"[VALID] {file_path}: {message}")
+        else:
+            print(f"[INVALID] {file_path}: {message}")
 
     def update(self, prev: List[Tuple[FResult, str]]):
         pass
-
