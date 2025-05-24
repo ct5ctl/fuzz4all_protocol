@@ -56,9 +56,9 @@ class HTTPTarget(Target):
 
     def parse_validation_message(self, success: bool, message: str, file_path: str):
         if success:
-            print(f"[VALID ✅] {file_path}: {message}")
+            print(f"[VALID] {file_path}: {message}")
         else:
-            print(f"[INVALID ❌] {file_path}: {message}")
+            print(f"[INVALID] {file_path}: {message}")
 
     def update(self, prev: List[Tuple[FResult, str]]):
         pass
