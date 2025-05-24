@@ -85,9 +85,9 @@ class FTPTarget(Target):
 
     def parse_validation_message(self, success: bool, message: str, file_path: str):
         if success:
-            print(f"[VALID ✅] {file_path}: {message}")
+            print(f"[VALID] {file_path}: {message}")
         else:
-            print(f"[INVALID ❌] {file_path}: {message}")
+            print(f"[INVALID] {file_path}: {message}")
 
     def update(self, prev: List[Tuple[FResult, str]]):
         # 可以记录哪些输入是无效的，当前不做处理
