@@ -13,7 +13,7 @@ fuzzing:
 target:
   language: ftp
   path_documentation: config/documentation/protocol/bftpd.md
-  path_example_code:
+  path_example_code: /home/protocols/bftpd
   trigger_to_generate_input: "Generate a valid FTP command sequence supported by bftpd for login, upload or file browsing."
   input_hint: "USER anonymous\r\nPASS ftp@\r\n"
   path_hand_written_prompt:

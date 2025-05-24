@@ -2,7 +2,8 @@
 
 # List of protocols to fuzz
 # protocols=("bftpd" "dcmtk" "forked-daapd" "google_quiche" "lightftp" "live555" "proftpd" "pureftpd")
-protocols=("pureftpd")
+# protocols=("pureftpd")
+protocols=("bftpd" "dcmtk" "forked-daapd" "google_quiche" "lightftp" "live555" "proftpd")
 
 # Set default parameters (can override via environment variables)
 BATCH_SIZE="${FUZZING_BATCH_SIZE:-30}"

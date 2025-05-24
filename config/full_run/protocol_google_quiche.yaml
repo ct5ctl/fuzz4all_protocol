@@ -13,7 +13,7 @@ fuzzing:
 target:
   language: quic
   path_documentation: config/documentation/protocol/google_quiche.md
-  path_example_code:
+  path_example_code: /home/protocols/quiche
   trigger_to_generate_input: "Generate a valid QUIC Initial, Handshake, or HTTP/3 stream message for Google QUICHE stack."
   input_hint: "\xC0\x00\x00\x00..."  # example QUIC binary start
   path_hand_written_prompt:

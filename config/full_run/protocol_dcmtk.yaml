@@ -13,7 +13,7 @@ fuzzing:
 target:
   language: dicom
   path_documentation: config/documentation/protocol/dcmtk.md
-  path_example_code:
+  path_example_code: /home/protocols/dcmtk
   trigger_to_generate_input: "Generate a valid DICOM association request or C-ECHO/C-STORE message for DCMTK."
   input_hint: "\x01\x00\x00\x00..."  # placeholder for binary input
   path_hand_written_prompt:

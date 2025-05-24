@@ -13,7 +13,7 @@ fuzzing:
 target:
   language: ftp
   path_documentation: config/documentation/protocol/proftpd.md
-  path_example_code:
+  path_example_code: /home/protocols/proftpd
   trigger_to_generate_input: "Generate a valid FTP command sequence to test login, directory listing or upload for proftpd."
   input_hint: "USER root\r\nPASS password\r\n"
   path_hand_written_prompt:

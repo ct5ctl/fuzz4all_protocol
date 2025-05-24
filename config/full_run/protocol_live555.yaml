@@ -13,7 +13,7 @@ fuzzing:
 target:
   language: rtsp
   path_documentation: config/documentation/protocol/live555.md
-  path_example_code:
+  path_example_code: /home/protocols/live555
   trigger_to_generate_input: "Generate a valid RTSP request like OPTIONS, DESCRIBE or SETUP for live555 server."
   input_hint: "OPTIONS rtsp://127.0.0.1:8554/ RTSP/1.0\r\nCSeq: 1\r\n\r\n"
   path_hand_written_prompt:

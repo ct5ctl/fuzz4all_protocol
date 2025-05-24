@@ -13,7 +13,7 @@ fuzzing:
 target:
   language: ftp
   path_documentation: config/documentation/protocol/lightftp.md
-  path_example_code:
+  path_example_code: /home/protocols/LightFTP
   trigger_to_generate_input: "Generate valid FTP command sequences (USER, PASS, LIST, STOR) for lightFTP."
   input_hint: "USER test\r\nPASS test@\r\n"
   path_hand_written_prompt:

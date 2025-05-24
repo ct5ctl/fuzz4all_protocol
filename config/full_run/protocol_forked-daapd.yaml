@@ -13,7 +13,7 @@ fuzzing:
 target:
   language: http
   path_documentation: config/documentation/protocol/forked-daapd.md
-  path_example_code:
+  path_example_code: /home/protocols/forked-daapd
   trigger_to_generate_input: "Generate a valid DAAP HTTP request such as GET /server-info or GET /databases for forked-daapd."
   input_hint: "GET /server-info HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n"
   path_hand_written_prompt:
