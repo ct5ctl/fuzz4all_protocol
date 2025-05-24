@@ -7,7 +7,13 @@ from Fuzz4All.target.JAVA.JAVA import JAVATarget
 from Fuzz4All.target.QISKIT.QISKIT import QiskitTarget
 from Fuzz4All.target.SMT.SMT import SMTTarget
 from Fuzz4All.target.target import Target
+
+
 from Fuzz4All.target.FTP.FTP import FTPTarget
+from Fuzz4All.target.HTTP.HTTP import HTTPTarget
+from Fuzz4All.target.DICOM.DICOM import DICOMTarget
+from Fuzz4All.target.QUIC.QUIC import QUICTarget
+from Fuzz4All.target.RTSP.RTSP import RTSPTarget
 
 
 def make_target(kwargs: Dict[str, Any]) -> Target:
@@ -25,8 +31,16 @@ def make_target(kwargs: Dict[str, Any]) -> Target:
         return GOTarget(**kwargs)
     elif language == "java":  # Java
         return JAVATarget(**kwargs)
-    elif target["language"] == "ftp":
+    elif language == "ftp":
         return FTPTarget(**kwargs)
+    elif language == "http":
+        return HTTPTarget(**kwargs)
+    elif language == "dicom":
+        return DICOMTarget(**kwargs)
+    elif language == "quic":
+        return QUICTarget(**kwargs)
+    elif language == "rtsp":
+        return RTSPTarget(**kwargs)
     else:
         raise ValueError(f"Invalid target {language}")
 
@@ -78,5 +92,13 @@ def make_target_with_config(config_dict: Dict[str, Any]) -> Target:
         return JAVATarget(**target_compat_dict)
     elif target["language"] == "ftp":             
         return FTPTarget(**target_compat_dict)
+    elif target["language"] == "http":
+        return HTTPTarget(**target_compat_dict)
+    elif target["language"] == "dicom":
+        return DICOMTarget(**target_compat_dict)
+    elif target["language"] == "quic":
+        return QUICTarget(**target_compat_dict)
+    elif target["language"] == "rtsp":
+        return RTSPTarget(**target_compat_dict)
     else:
         raise ValueError(f"Invalid target {target['language']}")

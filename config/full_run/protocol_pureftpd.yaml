@@ -13,7 +13,7 @@ fuzzing:
 target:
   language: ftp
   path_documentation: config/documentation/protocol/pureftpd.md
-  path_example_code:
+  path_example_code: /home/protocols/pure-ftpd
   trigger_to_generate_input: "Generate a valid FTP request to login, upload a file, or list files."
   input_hint: "USER 123\r\nPASS guest@\r\n"
   path_hand_written_prompt:
