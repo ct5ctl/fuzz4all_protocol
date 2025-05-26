@@ -11,6 +11,7 @@ EOF_STRINGS = ["<|endoftext|>", "###"]
 # === OpenAI GPT ===
 class OpenAICoder:
     def __init__(self, model_name: str, device: str, eos: List[str], max_length: int):
+        from openai import OpenAI
         self.api_key = os.getenv("OPENAI_API_KEY")
         if not self.api_key:
             raise ValueError("Please set OPENAI_API_KEY environment variable.")
@@ -18,6 +19,9 @@ class OpenAICoder:
         self.model_name = model_name
         self.eos = eos
         self.max_length = max_length
+        self.token_log_path = "tokens_used.txt"
+        self.total_prompt_tokens = 0
+        self.total_completion_tokens = 0
 
     def _strip_output(self, text: str) -> str:
         for eos in self.eos:
@@ -33,12 +37,22 @@ class OpenAICoder:
             temperature=temperature,
             n=batch_size,
             stop=self.eos if self.eos else None,
-            max_tokens=min(max_length, self.max_length)
+            max_tokens=min(max_length, self.max_length),
         )
-        return [
-            self._strip_output(choice.message.content)
-            for choice in response.choices
-        ]
+
+        # === Token usage tracking ===
+        usage = response.usage
+        self.total_prompt_tokens += usage.prompt_tokens
+        self.total_completion_tokens += usage.completion_tokens
+
+        # Save token info
+        self._log_token_usage(usage.prompt_tokens, usage.completion_tokens)
+
+        return [choice.message.content for choice in response.choices]
+
+    def _log_token_usage(self, prompt_toks, completion_toks):
+        with open(self.token_log_path, "a") as f:
+            f.write(f"[{datetime.datetime.now()}] prompt: {prompt_toks}, completion: {completion_toks}\n")
 
 
 # === DeepSeek ===
