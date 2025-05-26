@@ -1,129 +1,121 @@
 import os
-from typing import Any, Dict, List, Optional, Tuple, Union
-
+import requests
+from typing import List
+from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
-from transformers import (
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    StoppingCriteria,
-    StoppingCriteriaList,
-)
+import openai
 
-os.environ["TOKENIZERS_PARALLELISM"] = "false"  # disable warning
 EOF_STRINGS = ["<|endoftext|>", "###"]
 
+# === OpenAI GPT ===
+class OpenAICoder:
+    def __init__(self, model_name: str, device: str, eos: List[str], max_length: int):
+        self.api_key = os.getenv("OPENAI_API_KEY")
+        if not self.api_key:
+            raise ValueError("Please set OPENAI_API_KEY environment variable.")
+        openai.api_key = self.api_key
+        self.model_name = model_name
+        self.eos = EOF_STRINGS + eos
+        self.max_length = max_length
 
-class EndOfFunctionCriteria(StoppingCriteria):
-    def __init__(self, start_length, eos, tokenizer, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.start_length = start_length
-        self.eos = eos
-        self.tokenizer = tokenizer
-        self.end_length = {}
+    def _strip_output(self, text: str) -> str:
+        for eos in self.eos:
+            idx = text.find(eos)
+            if idx != -1:
+                return text[:idx]
+        return text
 
-    def __call__(self, input_ids, scores, **kwargs):
-        """Returns true if all generated sequences contain any of the end-of-function strings."""
-        decoded_generations = self.tokenizer.batch_decode(
-            input_ids[:, self.start_length :]
+    def generate(self, prompt: str, batch_size=1, temperature=1.0, max_length=512) -> List[str]:
+        response = openai.ChatCompletion.create(
+            model=self.model_name,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=temperature,
+            n=batch_size,
+            max_tokens=min(max_length, self.max_length),
+            stop=self.eos
         )
-        done = []
-        for index, decoded_generation in enumerate(decoded_generations):
-            finished = any(
-                [stop_string in decoded_generation for stop_string in self.eos]
-            )
-            if (
-                finished and index not in self.end_length
-            ):  # ensures first time we see it
-                for stop_string in self.eos:
-                    if stop_string in decoded_generation:
-                        self.end_length[index] = len(
-                            input_ids[
-                                index,  # get length of actual generation
-                                self.start_length : -len(
-                                    self.tokenizer.encode(
-                                        stop_string,
-                                        add_special_tokens=False,
-                                        return_tensors="pt",
-                                    )[0]
-                                ),
-                            ]
-                        )
-            done.append(finished)
-        return all(done)
+        return [
+            self._strip_output(choice["message"]["content"])
+            for choice in response["choices"]
+        ]
 
 
-class StarCoder:
-    def __init__(
-        self, model_name: str, device: str, eos: List, max_length: int
-    ) -> None:
-        checkpoint = model_name
-        self.device = device
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            checkpoint,
-        )
-        self.model = (
-            AutoModelForCausalLM.from_pretrained(
-                checkpoint,
-            )
-            .to(torch.bfloat16)
-            .to(device)
-        )
+# === DeepSeek ===
+class DeepSeekCoder:
+    def __init__(self, model_name: str, device: str, eos: List[str], max_length: int):
+        self.api_url = "https://api.deepseek.com/v1/chat/completions"
+        self.api_key = os.getenv("DEEPSEEK_API_KEY")
+        if not self.api_key:
+            raise ValueError("Please set DEEPSEEK_API_KEY environment variable.")
+        self.model_name = model_name
         self.eos = EOF_STRINGS + eos
         self.max_length = max_length
         self.prefix_token = "<fim_prefix>"
         self.suffix_token = "<fim_suffix><fim_middle>"
-        self.skip_special_tokens = False
 
-    @torch.inference_mode()
-    def generate(
-        self, prompt, batch_size=10, temperature=1.0, max_length=512
-    ) -> List[str]:
-        input_str = self.prefix_token + prompt + self.suffix_token
-        input_tokens = self.tokenizer.encode(input_str, return_tensors="pt").to(
-            self.device
-        )
+    def _build_prompt(self, prompt: str) -> str:
+        return self.prefix_token + prompt + self.suffix_token
 
-        scores = StoppingCriteriaList(
-            [
-                EndOfFunctionCriteria(
-                    start_length=len(input_tokens[0]),
-                    eos=self.eos,
-                    tokenizer=self.tokenizer,
-                )
-            ]
-        )
+    def _strip_output(self, text: str) -> str:
+        for eos in self.eos:
+            idx = text.find(eos)
+            if idx != -1:
+                return text[:idx]
+        return text
 
-        raw_outputs = self.model.generate(
-            input_tokens,
-            max_length=min(self.max_length, len(input_tokens[0]) + max_length),
+    def generate(self, prompt: str, batch_size=1, temperature=1.0, max_length=512) -> List[str]:
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        data = {
+            "model": self.model_name,
+            "messages": [{"role": "user", "content": self._build_prompt(prompt)}],
+            "temperature": max(temperature, 1e-2),
+            "n": batch_size,
+            "stop": self.eos,
+            "max_tokens": min(max_length, self.max_length)
+        }
+        response = requests.post(self.api_url, json=data, headers=headers)
+        if response.status_code != 200:
+            raise RuntimeError(f"DeepSeek API Error {response.status_code}: {response.text}")
+        results = response.json()
+        return [
+            self._strip_output(choice["message"]["content"])
+            for choice in results.get("choices", [])
+        ]
+
+
+# === HuggingFace StarCoder (local) ===
+class StarCoder:
+    def __init__(self, model_name: str, device: str, eos: List[str], max_length: int):
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.model = AutoModelForCausalLM.from_pretrained(model_name).to(device)
+        self.eos = EOF_STRINGS + eos
+        self.device = device
+        self.max_length = max_length
+
+    def _strip_output(self, text: str) -> str:
+        for eos in self.eos:
+            idx = text.find(eos)
+            if idx != -1:
+                return text[:idx]
+        return text
+
+    def generate(self, prompt: str, batch_size=1, temperature=1.0, max_length=512) -> List[str]:
+        inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
+        outputs = self.model.generate(
+            **inputs,
+            max_new_tokens=min(max_length, self.max_length),
             do_sample=True,
-            top_p=1.0,
-            temperature=max(temperature, 1e-2),
-            num_return_sequences=batch_size,
-            stopping_criteria=scores,
-            output_scores=True,
-            return_dict_in_generate=True,
-            repetition_penalty=1.0,
-            pad_token_id=self.tokenizer.eos_token_id,
+            temperature=temperature,
+            num_return_sequences=batch_size
         )
-        gen_seqs = raw_outputs.sequences[:, len(input_tokens[0]) :]
-        gen_strs = self.tokenizer.batch_decode(
-            gen_seqs, skip_special_tokens=self.skip_special_tokens
-        )
-        outputs = []
-        # removes eos tokens.
-        for output in gen_strs:
-            min_index = 10000
-            for eos in self.eos:
-                if eos in output:
-                    min_index = min(min_index, output.index(eos))
-            outputs.append(output[:min_index])
-        return outputs
+        return [self._strip_output(self.tokenizer.decode(output, skip_special_tokens=True)) for output in outputs]
 
 
-def make_model(eos: List, model_name: str, device: str, max_length: int):
-    """Returns a llm model instance (optional: using the configuration file)."""
-
+# === Unified Model Interface ===
+def make_model(eos: List[str], model_name: str, device: str, max_length: int):
     kwargs_for_model = {
         "model_name": model_name,
         "eos": eos,
@@ -131,21 +123,19 @@ def make_model(eos: List, model_name: str, device: str, max_length: int):
         "max_length": max_length,
     }
 
-    # print the model config
+    print("[DEBUG] Selecting model backend based on model_name")
     print("=== Model Config ===")
-    print(f"model_name: {model_name}")
     for k, v in kwargs_for_model.items():
         print(f"{k}: {v}")
 
-    if "starcoder" in model_name.lower():
-        model_obj = StarCoder(**kwargs_for_model)
+    if "gpt" in model_name.lower():
+        model_obj = OpenAICoder(**kwargs_for_model)
+    elif "deepseek" in model_name.lower():
+        model_obj = DeepSeekCoder(**kwargs_for_model)
     else:
-        # default
         model_obj = StarCoder(**kwargs_for_model)
 
-    model_obj_class_name = model_obj.__class__.__name__
-
-    print(f"model_obj (class name): {model_obj_class_name}")
+    print(f"model_obj (class name): {model_obj.__class__.__name__}")
     print("====================")
 
     return model_obj
