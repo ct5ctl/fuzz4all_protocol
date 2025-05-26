@@ -2,13 +2,19 @@
 
 # List of protocols to fuzz
 # protocols=("bftpd" "dcmtk" "forked-daapd" "google_quiche" "lightftp" "live555" "proftpd" "pureftpd")
-# protocols=("pureftpd")
-protocols=("bftpd" "dcmtk" "forked-daapd" "google_quiche" "lightftp" "live555" "proftpd")
+protocols=("pureftpd")
+# protocols=("bftpd" "dcmtk" "forked-daapd" "google_quiche" "lightftp" "live555" "proftpd")
+
+# # Set default parameters (can override via environment variables)
+# BATCH_SIZE="${FUZZING_BATCH_SIZE:-30}"
+# MODEL_NAME="${FUZZING_MODEL:-bigcode/starcoderbase}"
+# DEVICE="${FUZZING_DEVICE:-cuda}"
 
 # Set default parameters (can override via environment variables)
 BATCH_SIZE="${FUZZING_BATCH_SIZE:-30}"
-MODEL_NAME="${FUZZING_MODEL:-bigcode/starcoderbase}"
-DEVICE="${FUZZING_DEVICE:-cuda}"
+MODEL_NAME="${FUZZING_MODEL:-gpt-4o-mini}"   
+DEVICE="${FUZZING_DEVICE:-api}"             
+
 
 echo "Starting Fuzz4All for protocol servers..."
 echo "BATCH_SIZE: $BATCH_SIZE"

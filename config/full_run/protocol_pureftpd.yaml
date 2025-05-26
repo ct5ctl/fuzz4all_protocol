@@ -26,9 +26,16 @@ target:
 #   model_name: deepseek-chat
 #   max_length: 512
 
+# llm:
+#   temperature: 1
+#   batch_size: 30
+#   device: cuda
+#   model_name: bigcode/starcoderbase
+#   max_length: 1024
+
 llm:
   temperature: 1
-  batch_size: 30
-  device: cuda
-  model_name: bigcode/starcoderbase
+  batch_size: 10   # GPT-4o-mini 接口推荐保守设定
+  device: api
+  model_name: gpt-4o-mini
   max_length: 1024
