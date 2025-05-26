@@ -23,37 +23,57 @@ class FTPTarget(Target):
         self.generated_count = 0
 
     def build_prompt(self) -> str:
-
         config = self.config_dict
         target_config = config["target"]
         prompt = ""
 
+        max_total_chars = 100_000
+        current_total_chars = 0
+
         # 触发提示词
         if "trigger_to_generate_input" in target_config:
-            prompt += self.wrap_in_comment(target_config["trigger_to_generate_input"]) + "\n"
+            part = self.wrap_in_comment(target_config["trigger_to_generate_input"]) + "\n"
+            prompt += part
+            current_total_chars += len(part)
 
         # 输入提示
         if "input_hint" in target_config:
-            prompt += target_config["input_hint"] + "\n"
+            part = target_config["input_hint"] + "\n"
+            prompt += part
+            current_total_chars += len(part)
 
         # 添加文档内容
         doc_path = target_config.get("path_documentation", "")
         if os.path.exists(doc_path):
             with open(doc_path, "r", encoding="utf-8") as f:
-                prompt += "\n# Documentation:\n" + f.read() + "\n"
+                doc_text = f.read()
+            doc_text = doc_text[:max_total_chars - current_total_chars]
+            part = "\n# Documentation:\n" + doc_text + "\n"
+            prompt += part
+            current_total_chars += len(part)
 
         # 添加示例代码内容
         code_path = target_config.get("path_example_code", "")
         if os.path.exists(code_path):
+            code_parts = []
             if os.path.isdir(code_path):
                 for root, _, files in os.walk(code_path):
                     for file in files:
                         file_path = os.path.join(root, file)
                         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-                            prompt += f"\n# Code File: {file}\n" + f.read() + "\n"
+                            content = f.read()
+                        part = f"\n# Code File: {file}\n" + content + "\n"
+                        if current_total_chars + len(part) > max_total_chars:
+                            break
+                        code_parts.append(part)
+                        current_total_chars += len(part)
             else:
                 with open(code_path, "r", encoding="utf-8", errors="ignore") as f:
-                    prompt += "\n# Example Code:\n" + f.read() + "\n"
+                    content = f.read()
+                part = "\n# Example Code:\n" + content[:max_total_chars - current_total_chars] + "\n"
+                code_parts.append(part)
+                current_total_chars += len(part)
+            prompt += "".join(code_parts)
 
         return prompt
 
