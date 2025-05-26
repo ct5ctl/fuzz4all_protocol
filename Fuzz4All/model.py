@@ -13,9 +13,9 @@ class OpenAICoder:
         self.api_key = os.getenv("OPENAI_API_KEY")
         if not self.api_key:
             raise ValueError("Please set OPENAI_API_KEY environment variable.")
-        openai.api_key = self.api_key
+        self.client = OpenAI(api_key=self.api_key)
         self.model_name = model_name
-        self.eos = EOF_STRINGS + eos
+        self.eos = eos
         self.max_length = max_length
 
     def _strip_output(self, text: str) -> str:
@@ -26,17 +26,17 @@ class OpenAICoder:
         return text
 
     def generate(self, prompt: str, batch_size=1, temperature=1.0, max_length=512) -> List[str]:
-        response = openai.ChatCompletion.create(
+        response = self.client.chat.completions.create(
             model=self.model_name,
             messages=[{"role": "user", "content": prompt}],
             temperature=temperature,
             n=batch_size,
-            max_tokens=min(max_length, self.max_length),
-            stop=self.eos
+            stop=self.eos if self.eos else None,
+            max_tokens=min(max_length, self.max_length)
         )
         return [
-            self._strip_output(choice["message"]["content"])
-            for choice in response["choices"]
+            self._strip_output(choice.message.content)
+            for choice in response.choices
         ]
 
 
