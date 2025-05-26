@@ -42,12 +42,10 @@ class OpenAICoder:
             max_tokens=min(max_length, self.max_length),
         )
 
-        # === Token usage tracking ===
         usage = response.usage
         self.total_prompt_tokens += usage.prompt_tokens
         self.total_completion_tokens += usage.completion_tokens
 
-        # Save token info
         self._log_token_usage(usage.prompt_tokens, usage.completion_tokens)
 
         return [choice.message.content for choice in response.choices]
@@ -55,6 +53,14 @@ class OpenAICoder:
     def _log_token_usage(self, prompt_toks, completion_toks):
         with open(self.token_log_path, "a") as f:
             f.write(f"[{datetime.datetime.now()}] prompt: {prompt_toks}, completion: {completion_toks}\n")
+
+    def _write_total_tokens(self):
+        total = self.total_prompt_tokens + self.total_completion_tokens
+        with open(self.token_log_path, "a") as f:
+            f.write("\n=== TOTAL TOKENS USED ===\n")
+            f.write(f"Prompt tokens: {self.total_prompt_tokens}\n")
+            f.write(f"Completion tokens: {self.total_completion_tokens}\n")
+            f.write(f"Total tokens: {total}\n")
 
 
 # === DeepSeek ===
