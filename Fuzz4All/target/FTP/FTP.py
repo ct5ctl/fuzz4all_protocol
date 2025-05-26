@@ -23,23 +23,37 @@ class FTPTarget(Target):
         self.generated_count = 0
 
     def build_prompt(self) -> str:
-        """
-        构建发送给 LLM 的 prompt，根据 trigger、hint、文档等拼接而成。
-        """
+
         config = self.config_dict
         target_config = config["target"]
-        fuzz_config = config["fuzzing"]
-
         prompt = ""
 
-        # 包裹触发提示
+        # 触发提示词
         if "trigger_to_generate_input" in target_config:
-            trigger = self.wrap_in_comment(target_config["trigger_to_generate_input"])
-            prompt += trigger + "\n"
+            prompt += self.wrap_in_comment(target_config["trigger_to_generate_input"]) + "\n"
 
-        # 添加输入 hint
+        # 输入提示
         if "input_hint" in target_config:
             prompt += target_config["input_hint"] + "\n"
+
+        # 添加文档内容
+        doc_path = target_config.get("path_documentation", "")
+        if os.path.exists(doc_path):
+            with open(doc_path, "r", encoding="utf-8") as f:
+                prompt += "\n# Documentation:\n" + f.read() + "\n"
+
+        # 添加示例代码内容
+        code_path = target_config.get("path_example_code", "")
+        if os.path.exists(code_path):
+            if os.path.isdir(code_path):
+                for root, _, files in os.walk(code_path):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                            prompt += f"\n# Code File: {file}\n" + f.read() + "\n"
+            else:
+                with open(code_path, "r", encoding="utf-8", errors="ignore") as f:
+                    prompt += "\n# Example Code:\n" + f.read() + "\n"
 
         return prompt
 
