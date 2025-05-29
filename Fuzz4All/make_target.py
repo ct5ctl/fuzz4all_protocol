@@ -15,6 +15,11 @@ from Fuzz4All.target.DICOM.DICOM import DICOMTarget
 from Fuzz4All.target.QUIC.QUIC import QUICTarget
 from Fuzz4All.target.RTSP.RTSP import RTSPTarget
 
+from Fuzz4All.target.DTLS.TinyDTLS import TinyDTLSTarget
+from Fuzz4All.target.SMTP.Exim import EximTarget
+from Fuzz4All.target.SIP.Kamailio import KamailioTarget
+from Fuzz4All.target.QUIC.NGTCP2 import NGTCP2Target
+
 
 def make_target(kwargs: Dict[str, Any]) -> Target:
     """Make a target from the given command line arguments."""
@@ -39,6 +44,14 @@ def make_target(kwargs: Dict[str, Any]) -> Target:
         return DICOMTarget(**kwargs)
     elif language == "quic":
         return QUICTarget(**kwargs)
+    elif language == "ngtcp2":
+        return NGTCP2Target(**kwargs)
+    elif language == "dtls":
+        return TinyDTLSTarget(**kwargs)
+    elif language == "smtp":
+        return EximTarget(**kwargs)
+    elif language == "sip":
+        return KamailioTarget(**kwargs)
     elif language == "rtsp":
         return RTSPTarget(**kwargs)
     else:

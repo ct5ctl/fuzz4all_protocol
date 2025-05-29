@@ -1,0 +1,27 @@
+fuzzing:
+  output_folder: ./outputs/full_run/tinydtls/
+  num: 2000
+  total_time: 0.18322
+  log_level: 3
+  otf: false
+  resume: false
+  evaluate: false
+  use_hand_written_prompt: false
+  no_input_prompt: false
+  prompt_strategy: 0
+
+target:
+  language: dtls
+  path_documentation: config/documentation/protocol/tinydtls.md
+  path_example_code: /home/protocols/tinydtls
+  trigger_to_generate_input: "Generate a valid DTLS handshake message for TinyDTLS."
+  input_hint: "\x16\xfe\xfd..."  # binary placeholder
+  path_hand_written_prompt:
+  target_string: "\x16"
+
+llm:
+  temperature: 1
+  batch_size: 30
+  device: cuda
+  model_name: bigcode/starcoderbase
+  max_length: 1024

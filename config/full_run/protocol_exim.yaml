@@ -1,0 +1,27 @@
+fuzzing:
+  output_folder: ./outputs/full_run/exim/
+  num: 2000
+  total_time: 0.80125
+  log_level: 3
+  otf: false
+  resume: false
+  evaluate: false
+  use_hand_written_prompt: false
+  no_input_prompt: false
+  prompt_strategy: 0
+
+target:
+  language: smtp
+  path_documentation: config/documentation/protocol/exim.md
+  path_example_code: /home/protocols/exim
+  trigger_to_generate_input: "Generate a valid SMTP EHLO, MAIL FROM, or RCPT TO sequence for Exim."
+  input_hint: "EHLO localhost\r\nMAIL FROM:<test@example.com>\r\nRCPT TO:<user@example.com>\r\n"
+  path_hand_written_prompt:
+  target_string: "EHLO"
+
+llm:
+  temperature: 1
+  batch_size: 30
+  device: cuda
+  model_name: bigcode/starcoderbase
+  max_length: 1024

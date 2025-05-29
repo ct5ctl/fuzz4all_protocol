@@ -1,0 +1,27 @@
+fuzzing:
+  output_folder: ./outputs/full_run/ngtcp2/
+  num: 2000
+  total_time: 3.74206
+  log_level: 3
+  otf: false
+  resume: false
+  evaluate: false
+  use_hand_written_prompt: false
+  no_input_prompt: false
+  prompt_strategy: 0
+
+target:
+  language: ngtcp2
+  path_documentation: config/documentation/protocol/ngtcp2.md
+  path_example_code: /home/protocols/ngtcp2
+  trigger_to_generate_input: "Generate a valid QUIC Initial packet or stream frame for ngtcp2."
+  input_hint: "\xc3\x00\x00\x00..."  # binary placeholder
+  path_hand_written_prompt:
+  target_string: "\xc3"
+
+llm:
+  temperature: 1
+  batch_size: 30
+  device: cuda
+  model_name: bigcode/starcoderbase
+  max_length: 1024

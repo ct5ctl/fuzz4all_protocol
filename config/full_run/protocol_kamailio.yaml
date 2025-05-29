@@ -1,0 +1,27 @@
+fuzzing:
+  output_folder: ./outputs/full_run/kamailio/
+  num: 2000
+  total_time: 3.005236
+  log_level: 3
+  otf: false
+  resume: false
+  evaluate: false
+  use_hand_written_prompt: false
+  no_input_prompt: false
+  prompt_strategy: 0
+
+target:
+  language: sip
+  path_documentation: config/documentation/protocol/kamailio.md
+  path_example_code: /home/protocols/kamailio
+  trigger_to_generate_input: "Generate a valid SIP REGISTER or INVITE request for Kamailio."
+  input_hint: "REGISTER sip:example.com SIP/2.0\r\nVia: SIP/2.0/UDP ...\r\n"
+  path_hand_written_prompt:
+  target_string: "REGISTER"
+
+llm:
+  temperature: 1
+  batch_size: 30
+  device: cuda
+  model_name: bigcode/starcoderbase
+  max_length: 1024
