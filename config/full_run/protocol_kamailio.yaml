@@ -21,7 +21,7 @@ target:
 
 llm:
   temperature: 1
-  batch_size: 30
+  batch_size: 1
   device: cuda
   model_name: bigcode/starcoderbase
   max_length: 1024

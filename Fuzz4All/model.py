@@ -2,6 +2,7 @@ import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
+torch.cuda.empty_cache()
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -93,7 +94,7 @@ class StarCoder:
             ]
         )
 
-        MAX_INPUT_LENGTH = 1024  # 适配你的 GPU 内存
+        MAX_INPUT_LENGTH = 512  # 适配你的 GPU 内存
         input_tokens = input_tokens[:, -MAX_INPUT_LENGTH:]
 
         raw_outputs = self.model.generate(
