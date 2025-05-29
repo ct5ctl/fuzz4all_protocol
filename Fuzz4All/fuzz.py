@@ -7,6 +7,7 @@ import click
 from rich.traceback import install
 
 install()
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 from rich.progress import (
     BarColumn,
