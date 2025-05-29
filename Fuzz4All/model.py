@@ -93,6 +93,9 @@ class StarCoder:
             ]
         )
 
+        MAX_INPUT_LENGTH = 1024  # 适配你的 GPU 内存
+        input_tokens = input_tokens[:, -MAX_INPUT_LENGTH:]
+
         raw_outputs = self.model.generate(
             input_tokens,
             max_length=min(self.max_length, len(input_tokens[0]) + max_length),
