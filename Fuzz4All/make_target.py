@@ -103,7 +103,7 @@ def make_target_with_config(config_dict: Dict[str, Any]) -> Target:
         return GOTarget(**target_compat_dict)
     elif target["language"] == "java":
         return JAVATarget(**target_compat_dict)
-    elif target["language"] == "ftp":             
+    elif target["language"] == "ftp":
         return FTPTarget(**target_compat_dict)
     elif target["language"] == "http":
         return HTTPTarget(**target_compat_dict)
@@ -113,5 +113,13 @@ def make_target_with_config(config_dict: Dict[str, Any]) -> Target:
         return QUICTarget(**target_compat_dict)
     elif target["language"] == "rtsp":
         return RTSPTarget(**target_compat_dict)
+    elif target["language"] == "smtp":
+        return EximTarget(**target_compat_dict)
+    elif target["language"] == "sip":
+        return KamailioTarget(**target_compat_dict)
+    elif target["language"] == "dtls":
+        return TinyDTLSTarget(**target_compat_dict)
+    elif target["language"] == "ngtcp2":
+        return NGTCP2Target(**target_compat_dict)
     else:
         raise ValueError(f"Invalid target {target['language']}")
