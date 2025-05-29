@@ -13,7 +13,8 @@ fuzzing:
 target:
   language: smtp
   path_documentation: config/documentation/protocol/exim.md
-  path_example_code: /home/protocols/exim
+  # path_example_code: /home/protocols/exim
+  path_example_code:
   trigger_to_generate_input: "Generate a valid SMTP EHLO, MAIL FROM, or RCPT TO sequence for Exim."
   input_hint: "EHLO localhost\r\nMAIL FROM:<test@example.com>\r\nRCPT TO:<user@example.com>\r\n"
   path_hand_written_prompt:
@@ -21,7 +22,7 @@ target:
 
 llm:
   temperature: 1
-  batch_size: 1
-  device: cuda:1
+  batch_size: 30
+  device: cuda
   model_name: bigcode/starcoderbase
   max_length: 1024

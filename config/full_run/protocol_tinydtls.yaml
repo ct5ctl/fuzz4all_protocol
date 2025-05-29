@@ -13,7 +13,8 @@ fuzzing:
 target:
   language: dtls
   path_documentation: config/documentation/protocol/tinydtls.md
-  path_example_code: /home/protocols/tinydtls
+  # path_example_code: /home/protocols/tinydtls
+  path_example_code:
   trigger_to_generate_input: "Generate a valid DTLS handshake message for TinyDTLS."
   input_hint: "\x16\xfe\xfd..."  # binary placeholder
   path_hand_written_prompt:
@@ -21,7 +22,7 @@ target:
 
 llm:
   temperature: 1
-  batch_size: 1
-  device: cuda:1
+  batch_size: 30
+  device: cuda
   model_name: bigcode/starcoderbase
   max_length: 1024

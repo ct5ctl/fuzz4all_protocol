@@ -13,7 +13,8 @@ fuzzing:
 target:
   language: ngtcp2
   path_documentation: config/documentation/protocol/ngtcp2.md
-  path_example_code: /home/protocols/ngtcp2
+  # path_example_code: /home/protocols/ngtcp2
+  path_example_code:
   trigger_to_generate_input: "Generate a valid QUIC Initial packet or stream frame for ngtcp2."
   input_hint: "\xc3\x00\x00\x00..."  # binary placeholder
   path_hand_written_prompt:
@@ -21,7 +22,7 @@ target:
 
 llm:
   temperature: 1
-  batch_size: 1
-  device: cuda:1
+  batch_size: 30
+  device: cuda
   model_name: bigcode/starcoderbase
   max_length: 1024
