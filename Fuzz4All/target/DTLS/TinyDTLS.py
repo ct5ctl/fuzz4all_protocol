@@ -37,16 +37,17 @@ class TinyDTLSTarget(Target):
                 prompt += "\n# Documentation:\n" + f.read() + "\n"
 
         code_path = target_config.get("path_example_code", "")
-        if os.path.exists(code_path):
-            if os.path.isdir(code_path):
-                for root, _, files in os.walk(code_path):
-                    for file in files:
-                        file_path = os.path.join(root, file)
-                        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-                            prompt += f"\n# Code File: {file}\n" + f.read() + "\n"
-            else:
-                with open(code_path, "r", encoding="utf-8", errors="ignore") as f:
-                    prompt += "\n# Example Code:\n" + f.read() + "\n"
+        if code_path:  # 仅当非空才处理
+            if os.path.exists(code_path):
+                if os.path.isdir(code_path):
+                    for root, _, files in os.walk(code_path):
+                        for file in files:
+                            file_path = os.path.join(root, file)
+                            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                                prompt += f"\n# Code File: {file}\n" + f.read() + "\n"
+                else:
+                    with open(code_path, "r", encoding="utf-8", errors="ignore") as f:
+                        prompt += "\n# Example Code:\n" + f.read() + "\n"
 
         return prompt
 
